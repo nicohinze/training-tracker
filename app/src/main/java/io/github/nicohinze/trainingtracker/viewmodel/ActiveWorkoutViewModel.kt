@@ -1,13 +1,14 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
 import android.app.Application
-import android.os.CountDownTimer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ class ActiveWorkoutViewModel(
     private val workoutId: Long = savedStateHandle.get<Long>("workoutId") ?: 0L
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState = _uiState.asStateFlow()
-    private var countDownTimer: CountDownTimer? = null
+    private var timerJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -121,27 +122,21 @@ class ActiveWorkoutViewModel(
             completedSets = restSet,
             remainingSeconds = pauseSeconds,
         )
-        countDownTimer?.cancel()
-        countDownTimer = object : CountDownTimer(pauseSeconds * 1000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                _uiState.value = _uiState.value.copy(
-                    remainingSeconds = ((millisUntilFinished + 999) / 1000).toInt(),
-                )
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            for (remaining in pauseSeconds - 1 downTo 0) {
+                delay(1000L)
+                if (remaining > 0) {
+                    _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        state = ActiveState.EXERCISING,
+                        currentExerciseIndex = nextExerciseIndex,
+                        completedSets = nextSet,
+                        remainingSeconds = 0,
+                    )
+                }
             }
-
-            override fun onFinish() {
-                _uiState.value = _uiState.value.copy(
-                    state = ActiveState.EXERCISING,
-                    currentExerciseIndex = nextExerciseIndex,
-                    completedSets = nextSet,
-                    remainingSeconds = 0,
-                )
-            }
-        }.start()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        countDownTimer?.cancel()
+        }
     }
 }
