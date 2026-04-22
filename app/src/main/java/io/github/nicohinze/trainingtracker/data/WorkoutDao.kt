@@ -47,6 +47,13 @@ interface WorkoutDao {
     suspend fun incrementCompletionCount(workoutId: Long)
 
     @Transaction
+    suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {
+        val workout = getWorkout(workoutId)
+        val exercises = getExerciseListForWorkout(workoutId)
+        return Pair(workout, exercises)
+    }
+
+    @Transaction
     suspend fun reorderExercises(exercises: List<Exercise>) {
         exercises.forEachIndexed { index, exercise ->
             if (exercise.orderIndex != index) {
