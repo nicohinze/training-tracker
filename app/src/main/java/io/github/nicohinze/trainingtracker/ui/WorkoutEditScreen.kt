@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
@@ -213,43 +214,16 @@ private fun ExerciseDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Exercise name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = sets,
-                        onValueChange = { sets = it.filter { c -> c.isDigit() } },
-                        label = { Text("Sets") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    OutlinedTextField(
-                        value = reps,
-                        onValueChange = { reps = it.filter { c -> c.isDigit() } },
-                        label = { Text("Reps") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = pause,
-                    onValueChange = { pause = it.filter { c -> c.isDigit() } },
-                    label = { Text("Rest between sets (seconds)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            ExerciseDialogContent(
+                name = name,
+                onNameChange = { name = it },
+                sets = sets,
+                onSetsChange = { sets = it.filter { c -> c.isDigit() } },
+                reps = reps,
+                onRepsChange = { reps = it.filter { c -> c.isDigit() } },
+                pause = pause,
+                onPauseChange = { pause = it.filter { c -> c.isDigit() } },
+            )
         },
         confirmButton = {
             TextButton(
@@ -271,5 +245,98 @@ private fun ExerciseDialog(
                 Text("Cancel")
             }
         },
+    )
+}
+
+@Composable
+private fun ExerciseDialogContent(
+    name: String,
+    onNameChange: (String) -> Unit,
+    sets: String,
+    onSetsChange: (String) -> Unit,
+    reps: String,
+    onRepsChange: (String) -> Unit,
+    pause: String,
+    onPauseChange: (String) -> Unit,
+) {
+    Column {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Exercise name") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = sets,
+                onValueChange = onSetsChange,
+                label = { Text("Sets") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedTextField(
+                value = reps,
+                onValueChange = onRepsChange,
+                label = { Text("Reps") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = pause,
+            onValueChange = onPauseChange,
+            label = { Text("Rest between sets (seconds)") },
+            placeholder = { Text("0") },
+            supportingText = if (pause.isBlank() || pause == "0") {
+                { Text("No rest between sets") }
+            } else {
+                null
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Preview("ExerciseCard", showBackground = true)
+@Composable
+private fun ExerciseCardPreview() {
+    ExerciseCard(
+        exercise = Exercise(
+            id = 1,
+            workoutId = 1,
+            name = "Bench Press",
+            sets = 3,
+            reps = 10,
+            pauseSeconds = 90,
+            orderIndex = 0,
+        ),
+        canMoveUp = true,
+        canMoveDown = true,
+        onMoveUp = {},
+        onMoveDown = {},
+        onEdit = {},
+        onDelete = {},
+    )
+}
+
+@Preview("ExerciseDialogContent - Add", showBackground = true)
+@Composable
+private fun ExerciseDialogContentAddPreview() {
+    ExerciseDialogContent(
+        name = "Squats",
+        onNameChange = {},
+        sets = "3",
+        onSetsChange = {},
+        reps = "10",
+        onRepsChange = {},
+        pause = "90",
+        onPauseChange = {},
     )
 }
