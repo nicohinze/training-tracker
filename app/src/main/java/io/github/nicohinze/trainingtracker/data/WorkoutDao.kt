@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -44,4 +45,13 @@ interface WorkoutDao {
 
     @Query("UPDATE workouts SET completionCount = completionCount + 1 WHERE id = :workoutId")
     suspend fun incrementCompletionCount(workoutId: Long)
+
+    @Transaction
+    suspend fun reorderExercises(exercises: List<Exercise>) {
+        exercises.forEachIndexed { index, exercise ->
+            if (exercise.orderIndex != index) {
+                updateExercise(exercise.copy(orderIndex = index))
+            }
+        }
+    }
 }

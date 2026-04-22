@@ -83,11 +83,7 @@ class WorkoutEditViewModel(
             val mutable = currentList.toMutableList()
             val item = mutable.removeAt(from)
             mutable.add(to, item)
-            mutable.forEachIndexed { index, exercise ->
-                if (exercise.orderIndex != index) {
-                    dao.updateExercise(exercise.copy(orderIndex = index))
-                }
-            }
+            dao.reorderExercises(mutable)
         }
     }
 }
