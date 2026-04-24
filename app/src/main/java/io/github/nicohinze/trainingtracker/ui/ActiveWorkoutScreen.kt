@@ -105,6 +105,7 @@ fun ActiveWorkoutScreen(
                             onStart = { viewModel.startWorkout() },
                         )
                     }
+
                     ActiveState.EXERCISING -> {
                         ExercisingContent(
                             exercises = uiState.exercises,
@@ -113,6 +114,7 @@ fun ActiveWorkoutScreen(
                             onSetDone = { viewModel.onSetFinished() },
                         )
                     }
+
                     ActiveState.RESTING -> {
                         RestingContent(
                             exercises = uiState.exercises,
@@ -122,6 +124,7 @@ fun ActiveWorkoutScreen(
                             totalPauseSeconds = uiState.currentExercise?.pauseSeconds ?: 1,
                         )
                     }
+
                     ActiveState.FINISHED -> {
                         FinishedContent(onDone = onBack)
                     }

@@ -21,18 +21,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        fun getDatabase(context: Context): AppDatabase =
-            instance ?: synchronized(this) {
-                val inst = Room
-                    .databaseBuilder(
-                        context.applicationContext,
-                        AppDatabase::class.java,
-                        "workout_database",
-                    )
-                    .addMigrations(MIGRATION_1_2)
-                    .build()
-                instance = inst
-                inst
-            }
+        fun getDatabase(context: Context): AppDatabase = instance ?: synchronized(this) {
+            val inst = Room
+                .databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "workout_database",
+                ).addMigrations(MIGRATION_1_2)
+                .build()
+            instance = inst
+            inst
+        }
     }
 }
