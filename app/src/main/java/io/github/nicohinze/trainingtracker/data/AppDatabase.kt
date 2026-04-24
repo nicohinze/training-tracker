@@ -15,7 +15,7 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instance: AppDatabase? = null
 
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE workouts ADD COLUMN completionCount INTEGER NOT NULL DEFAULT 0")
             }
