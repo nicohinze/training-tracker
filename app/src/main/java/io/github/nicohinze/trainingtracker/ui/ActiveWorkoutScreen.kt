@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
+import io.github.nicohinze.trainingtracker.data.ExerciseType
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveState
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutViewModel
 
@@ -304,6 +305,7 @@ private fun TableHeader() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             "#",
@@ -328,7 +330,7 @@ private fun TableHeader() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            "Reps",
+            "Reps/Seconds",
             modifier = Modifier.weight(0.7f),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
@@ -397,14 +399,14 @@ private fun ExerciseRow(
             color = contentColor,
         )
         Text(
-            "${exercise.reps}",
+            if (exercise.type == ExerciseType.SECONDS) "${exercise.amount} s" else "${exercise.amount}",
             modifier = Modifier.weight(0.7f),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = contentColor,
         )
         Text(
-            "${exercise.pauseSeconds}s",
+            "${exercise.pauseSeconds} s",
             modifier = Modifier.weight(0.8f),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
@@ -439,7 +441,14 @@ private fun ExerciseTable(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "Set $completedSets/${currentExercise.sets} — ${currentExercise.reps} reps",
+            buildString {
+                append("Set $completedSets/${currentExercise.sets} — ")
+                if (currentExercise.type == ExerciseType.SECONDS) {
+                    append("${currentExercise.amount} s")
+                } else {
+                    append("${currentExercise.amount} reps")
+                }
+            },
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -481,7 +490,7 @@ private fun ReadyContentPreview() {
                 workoutId = 1,
                 name = "Bench Press",
                 sets = 3,
-                reps = 10,
+                amount = 10,
                 pauseSeconds = 90,
                 orderIndex = 0,
             ),
@@ -490,7 +499,7 @@ private fun ReadyContentPreview() {
                 workoutId = 1,
                 name = "Squats",
                 sets = 4,
-                reps = 8,
+                amount = 8,
                 pauseSeconds = 120,
                 orderIndex = 1,
             ),
@@ -499,16 +508,17 @@ private fun ReadyContentPreview() {
                 workoutId = 1,
                 name = "Pull-ups",
                 sets = 3,
-                reps = 12,
+                amount = 12,
                 pauseSeconds = 60,
                 orderIndex = 2,
             ),
             Exercise(
                 id = 4,
                 workoutId = 1,
-                name = "Pull-ups",
+                name = "Plank",
                 sets = 2,
-                reps = 12,
+                amount = 12,
+                type = ExerciseType.SECONDS,
                 pauseSeconds = 60,
                 orderIndex = 3,
             ),
@@ -517,7 +527,7 @@ private fun ReadyContentPreview() {
                 workoutId = 1,
                 name = "Pull-ups",
                 sets = 1,
-                reps = 12,
+                amount = 12,
                 pauseSeconds = 60,
                 orderIndex = 4,
             ),
@@ -526,23 +536,76 @@ private fun ReadyContentPreview() {
     )
 }
 
-@Preview("ExercisingContent", showBackground = true)
+@Preview("ExercisingContentReps", showBackground = true)
 @Composable
-private fun ExercisingContentPreview() {
+private fun ExercisingContentRepsPreview() {
     val exercises = listOf(
         Exercise(
             id = 1,
             workoutId = 1,
             name = "Bench Press",
             sets = 3,
-            reps = 10,
+            amount = 10,
             pauseSeconds = 90,
             orderIndex = 0,
         ),
-        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, reps = 8, pauseSeconds = 120, orderIndex = 1),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, reps = 12, pauseSeconds = 60, orderIndex = 2),
-        Exercise(id = 4, workoutId = 1, name = "Pull-ups", sets = 2, reps = 12, pauseSeconds = 60, orderIndex = 3),
-        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, reps = 12, pauseSeconds = 60, orderIndex = 4),
+        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, amount = 8, pauseSeconds = 120, orderIndex = 1),
+        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
+        Exercise(
+            id = 4,
+            workoutId = 1,
+            name = "Plank",
+            sets = 2,
+            amount = 12,
+            type = ExerciseType.SECONDS,
+            pauseSeconds = 60,
+            orderIndex = 3,
+        ),
+        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
+    )
+    ExercisingContent(
+        exercises = exercises,
+        currentExerciseIndex = 1,
+        completedSets = 2,
+        onSetDone = {},
+    )
+}
+
+@Preview("ExercisingContentSeconds", showBackground = true)
+@Composable
+private fun ExercisingContentSecondsPreview() {
+    val exercises = listOf(
+        Exercise(
+            id = 1,
+            workoutId = 1,
+            name = "Bench Press",
+            sets = 3,
+            amount = 10,
+            pauseSeconds = 90,
+            orderIndex = 0,
+        ),
+        Exercise(
+            id = 2,
+            workoutId = 1,
+            name = "Plank",
+            sets = 4,
+            amount = 8,
+            type = ExerciseType.SECONDS,
+            pauseSeconds = 120,
+            orderIndex = 1,
+        ),
+        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
+        Exercise(
+            id = 4,
+            workoutId = 1,
+            name = "Plank",
+            sets = 2,
+            amount = 12,
+            type = ExerciseType.SECONDS,
+            pauseSeconds = 60,
+            orderIndex = 3,
+        ),
+        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
     )
     ExercisingContent(
         exercises = exercises,
@@ -561,14 +624,23 @@ private fun RestingContentPreview() {
             workoutId = 1,
             name = "Bench Press",
             sets = 3,
-            reps = 10,
+            amount = 10,
             pauseSeconds = 90,
             orderIndex = 0,
         ),
-        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, reps = 8, pauseSeconds = 120, orderIndex = 1),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, reps = 12, pauseSeconds = 60, orderIndex = 2),
-        Exercise(id = 4, workoutId = 1, name = "Pull-ups", sets = 2, reps = 12, pauseSeconds = 60, orderIndex = 3),
-        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, reps = 12, pauseSeconds = 60, orderIndex = 4),
+        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, amount = 8, pauseSeconds = 120, orderIndex = 1),
+        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
+        Exercise(
+            id = 4,
+            workoutId = 1,
+            name = "Plank",
+            sets = 2,
+            amount = 12,
+            type = ExerciseType.SECONDS,
+            pauseSeconds = 60,
+            orderIndex = 3,
+        ),
+        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
     )
     RestingContent(
         exercises = exercises,

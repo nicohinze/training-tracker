@@ -28,6 +28,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -44,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
+import io.github.nicohinze.trainingtracker.data.ExerciseType
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutEditViewModel
 
 @Composable
@@ -57,9 +61,9 @@ fun WorkoutEditScreen(
         title = workout?.name ?: "Edit Workout",
         exercises = exercises,
         onBack = onBack,
-        onAddExercise = { name, sets, reps, pause -> viewModel.addExercise(name, sets, reps, pause) },
-        onUpdateExercise = { exercise, name, sets, reps, pause ->
-            viewModel.updateExercise(exercise, name, sets, reps, pause)
+        onAddExercise = { name, sets, amount, pause, type -> viewModel.addExercise(name, sets, amount, pause, type) },
+        onUpdateExercise = { exercise, name, sets, amount, pause, type ->
+            viewModel.updateExercise(exercise, name, sets, amount, pause, type)
         },
         onDeleteExercise = { viewModel.deleteExercise(it) },
         onMoveExercise = { from, to -> viewModel.moveExercise(from, to, exercises) },
@@ -72,8 +76,8 @@ private fun WorkoutEditContent(
     title: String,
     exercises: List<Exercise>,
     onBack: () -> Unit,
-    onAddExercise: (String, Int, Int, Int) -> Unit,
-    onUpdateExercise: (Exercise, String, Int, Int, Int) -> Unit,
+    onAddExercise: (String, Int, Int, Int, ExerciseType) -> Unit,
+    onUpdateExercise: (Exercise, String, Int, Int, Int, ExerciseType) -> Unit,
     onDeleteExercise: (Exercise) -> Unit,
     onMoveExercise: (Int, Int) -> Unit,
 ) {
@@ -119,8 +123,8 @@ private fun WorkoutEditContent(
             ExerciseDialog(
                 title = "Add Exercise",
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name, sets, reps, pause ->
-                    onAddExercise(name, sets, reps, pause)
+                onConfirm = { name, sets, amount, pause, type ->
+                    onAddExercise(name, sets, amount, pause, type)
                     showAddDialog = false
                 },
             )
@@ -130,11 +134,12 @@ private fun WorkoutEditContent(
                 title = "Edit Exercise",
                 initialName = exercise.name,
                 initialSets = exercise.sets,
-                initialReps = exercise.reps,
+                initialAmount = exercise.amount,
+                initialType = exercise.type,
                 initialPause = exercise.pauseSeconds,
                 onDismiss = { editingExercise = null },
-                onConfirm = { name, sets, reps, pause ->
-                    onUpdateExercise(exercise, name, sets, reps, pause)
+                onConfirm = { name, sets, amount, pause, type ->
+                    onUpdateExercise(exercise, name, sets, amount, pause, type)
                     editingExercise = null
                 },
             )
@@ -191,7 +196,15 @@ private fun ExerciseCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "${exercise.sets} sets x ${exercise.reps} reps | ${exercise.pauseSeconds}s rest",
+                    text = buildString {
+                        append("${exercise.sets} sets x ")
+                        if (exercise.type == ExerciseType.SECONDS) {
+                            append("${exercise.amount} s")
+                        } else {
+                            append("${exercise.amount} reps")
+                        }
+                        append(" | ${exercise.pauseSeconds} s rest")
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -223,15 +236,17 @@ private fun ExerciseDialog(
     title: String,
     initialName: String = "",
     initialSets: Int = 3,
-    initialReps: Int = 10,
+    initialAmount: Int = 10,
+    initialType: ExerciseType = ExerciseType.REPS,
     initialPause: Int = 90,
     onDismiss: () -> Unit,
-    onConfirm: (String, Int, Int, Int) -> Unit,
+    onConfirm: (String, Int, Int, Int, ExerciseType) -> Unit,
 ) {
     var name by remember { mutableStateOf(initialName) }
     var sets by remember { mutableStateOf(initialSets.toString()) }
-    var reps by remember { mutableStateOf(initialReps.toString()) }
+    var amount by remember { mutableStateOf(initialAmount.toString()) }
     var pause by remember { mutableStateOf(initialPause.toString()) }
+    var type by remember { mutableStateOf(initialType) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -242,8 +257,10 @@ private fun ExerciseDialog(
                 onNameChange = { name = it },
                 sets = sets,
                 onSetsChange = { sets = it.filter { c -> c.isDigit() } },
-                reps = reps,
-                onRepsChange = { reps = it.filter { c -> c.isDigit() } },
+                amount = amount,
+                onAmountChange = { amount = it.filter { c -> c.isDigit() } },
+                type = type,
+                onTypeChange = { type = it },
                 pause = pause,
                 onPauseChange = { pause = it.filter { c -> c.isDigit() } },
             )
@@ -254,11 +271,12 @@ private fun ExerciseDialog(
                     onConfirm(
                         name.trim(),
                         sets.toIntOrNull() ?: 1,
-                        reps.toIntOrNull() ?: 1,
+                        amount.toIntOrNull() ?: 1,
                         pause.toIntOrNull() ?: 0,
+                        type,
                     )
                 },
-                enabled = name.isNotBlank() && (sets.toIntOrNull() ?: 0) > 0 && (reps.toIntOrNull() ?: 0) > 0,
+                enabled = name.isNotBlank() && (sets.toIntOrNull() ?: 0) > 0 && (amount.toIntOrNull() ?: 0) > 0,
             ) {
                 Text("Save")
             }
@@ -271,16 +289,19 @@ private fun ExerciseDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExerciseDialogContent(
     name: String,
     onNameChange: (String) -> Unit,
     sets: String,
     onSetsChange: (String) -> Unit,
-    reps: String,
-    onRepsChange: (String) -> Unit,
+    amount: String,
+    onAmountChange: (String) -> Unit,
     pause: String,
     onPauseChange: (String) -> Unit,
+    type: ExerciseType,
+    onTypeChange: (ExerciseType) -> Unit,
 ) {
     Column {
         OutlinedTextField(
@@ -290,6 +311,18 @@ private fun ExerciseDialogContent(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
+        Spacer(Modifier.height(8.dp))
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            ExerciseType.entries.forEachIndexed { index, exerciseType ->
+                SegmentedButton(
+                    selected = type == exerciseType,
+                    onClick = { onTypeChange(exerciseType) },
+                    shape = SegmentedButtonDefaults.itemShape(index, ExerciseType.entries.size),
+                ) {
+                    Text(if (exerciseType == ExerciseType.REPS) "Reps" else "Seconds")
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
@@ -301,9 +334,9 @@ private fun ExerciseDialogContent(
                 modifier = Modifier.weight(1f),
             )
             OutlinedTextField(
-                value = reps,
-                onValueChange = onRepsChange,
-                label = { Text("Reps") },
+                value = amount,
+                onValueChange = onAmountChange,
+                label = { Text(if (type == ExerciseType.REPS) "Reps" else "Seconds") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 modifier = Modifier.weight(1f),
@@ -338,7 +371,7 @@ private fun WorkoutEditContentPreview() {
                 workoutId = 1,
                 name = "Bench Press",
                 sets = 3,
-                reps = 10,
+                amount = 10,
                 pauseSeconds = 90,
                 orderIndex = 0,
             ),
@@ -347,7 +380,7 @@ private fun WorkoutEditContentPreview() {
                 workoutId = 1,
                 name = "Overhead Press",
                 sets = 3,
-                reps = 8,
+                amount = 8,
                 pauseSeconds = 90,
                 orderIndex = 1,
             ),
@@ -356,14 +389,14 @@ private fun WorkoutEditContentPreview() {
                 workoutId = 1,
                 name = "Tricep Dips",
                 sets = 4,
-                reps = 12,
+                amount = 12,
                 pauseSeconds = 60,
                 orderIndex = 2,
             ),
         ),
         onBack = {},
-        onAddExercise = { _, _, _, _ -> },
-        onUpdateExercise = { _, _, _, _, _ -> },
+        onAddExercise = { _, _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _, _ -> },
         onDeleteExercise = {},
         onMoveExercise = { _, _ -> },
     )
@@ -376,8 +409,8 @@ private fun WorkoutEditContentEmptyPreview() {
         title = "New Workout",
         exercises = emptyList(),
         onBack = {},
-        onAddExercise = { _, _, _, _ -> },
-        onUpdateExercise = { _, _, _, _, _ -> },
+        onAddExercise = { _, _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _, _ -> },
         onDeleteExercise = {},
         onMoveExercise = { _, _ -> },
     )
@@ -392,7 +425,7 @@ private fun ExerciseCardPreview() {
             workoutId = 1,
             name = "Bench Press",
             sets = 3,
-            reps = 10,
+            amount = 10,
             pauseSeconds = 90,
             orderIndex = 0,
         ),
@@ -413,8 +446,10 @@ private fun ExerciseDialogContentAddPreview() {
         onNameChange = {},
         sets = "3",
         onSetsChange = {},
-        reps = "10",
-        onRepsChange = {},
+        amount = "10",
+        onAmountChange = {},
+        type = ExerciseType.REPS,
+        onTypeChange = {},
         pause = "90",
         onPauseChange = {},
     )

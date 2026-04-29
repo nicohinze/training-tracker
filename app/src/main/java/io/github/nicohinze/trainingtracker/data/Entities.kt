@@ -12,6 +12,11 @@ data class Workout(
     val completionCount: Int = 0,
 )
 
+enum class ExerciseType {
+    REPS,
+    SECONDS,
+}
+
 @Entity(
     tableName = "exercises",
     foreignKeys = [
@@ -29,7 +34,8 @@ data class Exercise(
     val workoutId: Long,
     val name: String,
     val sets: Int,
-    val reps: Int,
+    val amount: Int,
+    val type: ExerciseType = ExerciseType.REPS,
     val pauseSeconds: Int,
     val orderIndex: Int,
 )
