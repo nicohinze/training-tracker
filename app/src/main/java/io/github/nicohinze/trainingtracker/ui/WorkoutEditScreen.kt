@@ -84,7 +84,7 @@ private fun WorkoutEditContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text("$title — ${exercises.sumOf { it.sets }} sets") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

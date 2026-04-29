@@ -175,7 +175,7 @@ private fun ReadyContent(
             }
         } else {
             Text(
-                "${exercises.size} exercises",
+                "${exercises.size} exercises — ${exercises.sumOf { it.sets }} sets",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -432,14 +432,14 @@ private fun ExerciseTable(
             .padding(horizontal = 16.dp, vertical = 32.dp),
     ) {
         Text(
-            "${currentExercise.name} — Set $completedSets/${currentExercise.sets}",
+            currentExercise.name,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "${currentExercise.reps} reps",
+            "Set $completedSets/${currentExercise.sets} — ${currentExercise.reps} reps",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
