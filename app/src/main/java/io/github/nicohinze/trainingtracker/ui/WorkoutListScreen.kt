@@ -34,12 +34,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutListScreen(
     onEditWorkout: (Long) -> Unit,
@@ -47,6 +47,24 @@ fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = viewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsState()
+    WorkoutListContent(
+        workouts = workouts,
+        onEditWorkout = onEditWorkout,
+        onStartWorkout = onStartWorkout,
+        onAddWorkout = { viewModel.addWorkout(it) },
+        onDeleteWorkout = { viewModel.deleteWorkout(it) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WorkoutListContent(
+    workouts: List<Workout>,
+    onEditWorkout: (Long) -> Unit,
+    onStartWorkout: (Long) -> Unit,
+    onAddWorkout: (String) -> Unit,
+    onDeleteWorkout: (Workout) -> Unit,
+) {
     var showAddDialog by remember { mutableStateOf(false) }
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
 
@@ -93,7 +111,7 @@ fun WorkoutListScreen(
             AddWorkoutDialog(
                 onDismiss = { showAddDialog = false },
                 onConfirm = { name ->
-                    viewModel.addWorkout(name)
+                    onAddWorkout(name)
                     showAddDialog = false
                 },
             )
@@ -105,7 +123,7 @@ fun WorkoutListScreen(
                 text = { Text("Delete \"${workout.name}\"? This cannot be undone.") },
                 confirmButton = {
                     TextButton(onClick = {
-                        viewModel.deleteWorkout(workout)
+                        onDeleteWorkout(workout)
                         workoutToDelete = null
                     }) {
                         Text("Delete")
@@ -181,13 +199,7 @@ private fun AddWorkoutDialog(
         onDismissRequest = onDismiss,
         title = { Text("New Workout") },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Workout name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            AddWorkoutDialogContent(name = name, onNameChange = { name = it })
         },
         confirmButton = {
             TextButton(
@@ -202,5 +214,67 @@ private fun AddWorkoutDialog(
                 Text("Cancel")
             }
         },
+    )
+}
+
+@Composable
+private fun AddWorkoutDialogContent(
+    name: String,
+    onNameChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = name,
+        onValueChange = onNameChange,
+        label = { Text("Workout name") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Preview("WorkoutList - Populated", showBackground = true)
+@Composable
+private fun WorkoutListContentPreview() {
+    WorkoutListContent(
+        workouts = listOf(
+            Workout(id = 1, name = "Push Day", completionCount = 5),
+            Workout(id = 2, name = "Pull Day", completionCount = 3),
+            Workout(id = 3, name = "Leg Day", completionCount = 0),
+        ),
+        onEditWorkout = {},
+        onStartWorkout = {},
+        onAddWorkout = {},
+        onDeleteWorkout = {},
+    )
+}
+
+@Preview("WorkoutList - Empty", showBackground = true)
+@Composable
+private fun WorkoutListContentEmptyPreview() {
+    WorkoutListContent(
+        workouts = emptyList(),
+        onEditWorkout = {},
+        onStartWorkout = {},
+        onAddWorkout = {},
+        onDeleteWorkout = {},
+    )
+}
+
+@Preview("WorkoutCard", showBackground = true)
+@Composable
+private fun WorkoutCardPreview() {
+    WorkoutCard(
+        workout = Workout(id = 1, name = "Push Day", completionCount = 5),
+        onEdit = {},
+        onStart = {},
+        onDelete = {},
+    )
+}
+
+@Preview("AddWorkoutDialogContent", showBackground = true)
+@Composable
+private fun AddWorkoutDialogContentPreview() {
+    AddWorkoutDialogContent(
+        name = "Leg Day",
+        onNameChange = {},
     )
 }
