@@ -46,7 +46,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutEditViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutEditScreen(
     onBack: () -> Unit,
@@ -54,6 +53,30 @@ fun WorkoutEditScreen(
 ) {
     val workout by viewModel.workout.collectAsState()
     val exercises by viewModel.exercises.collectAsState()
+    WorkoutEditContent(
+        title = workout?.name ?: "Edit Workout",
+        exercises = exercises,
+        onBack = onBack,
+        onAddExercise = { name, sets, reps, pause -> viewModel.addExercise(name, sets, reps, pause) },
+        onUpdateExercise = { exercise, name, sets, reps, pause ->
+            viewModel.updateExercise(exercise, name, sets, reps, pause)
+        },
+        onDeleteExercise = { viewModel.deleteExercise(it) },
+        onMoveExercise = { from, to -> viewModel.moveExercise(from, to, exercises) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WorkoutEditContent(
+    title: String,
+    exercises: List<Exercise>,
+    onBack: () -> Unit,
+    onAddExercise: (String, Int, Int, Int) -> Unit,
+    onUpdateExercise: (Exercise, String, Int, Int, Int) -> Unit,
+    onDeleteExercise: (Exercise) -> Unit,
+    onMoveExercise: (Int, Int) -> Unit,
+) {
     var showAddDialog by remember { mutableStateOf(false) }
     var editingExercise by remember { mutableStateOf<Exercise?>(null) }
     var exerciseToDelete by remember { mutableStateOf<Exercise?>(null) }
@@ -61,7 +84,7 @@ fun WorkoutEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(workout?.name ?: "Edit Workout") },
+                title = { Text(title) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -85,8 +108,8 @@ fun WorkoutEditScreen(
                     exercise = exercise,
                     canMoveUp = index > 0,
                     canMoveDown = index < exercises.size - 1,
-                    onMoveUp = { viewModel.moveExercise(index, index - 1, exercises) },
-                    onMoveDown = { viewModel.moveExercise(index, index + 1, exercises) },
+                    onMoveUp = { onMoveExercise(index, index - 1) },
+                    onMoveDown = { onMoveExercise(index, index + 1) },
                     onEdit = { editingExercise = exercise },
                     onDelete = { exerciseToDelete = exercise },
                 )
@@ -97,7 +120,7 @@ fun WorkoutEditScreen(
                 title = "Add Exercise",
                 onDismiss = { showAddDialog = false },
                 onConfirm = { name, sets, reps, pause ->
-                    viewModel.addExercise(name, sets, reps, pause)
+                    onAddExercise(name, sets, reps, pause)
                     showAddDialog = false
                 },
             )
@@ -111,7 +134,7 @@ fun WorkoutEditScreen(
                 initialPause = exercise.pauseSeconds,
                 onDismiss = { editingExercise = null },
                 onConfirm = { name, sets, reps, pause ->
-                    viewModel.updateExercise(exercise, name, sets, reps, pause)
+                    onUpdateExercise(exercise, name, sets, reps, pause)
                     editingExercise = null
                 },
             )
@@ -123,7 +146,7 @@ fun WorkoutEditScreen(
                 text = { Text("Delete \"${exercise.name}\"? This cannot be undone.") },
                 confirmButton = {
                     TextButton(onClick = {
-                        viewModel.deleteExercise(exercise)
+                        onDeleteExercise(exercise)
                         exerciseToDelete = null
                     }) {
                         Text("Delete")
@@ -302,6 +325,62 @@ private fun ExerciseDialogContent(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+@Preview("WorkoutEdit - Populated", showBackground = true)
+@Composable
+private fun WorkoutEditContentPreview() {
+    WorkoutEditContent(
+        title = "Push Day",
+        exercises = listOf(
+            Exercise(
+                id = 1,
+                workoutId = 1,
+                name = "Bench Press",
+                sets = 3,
+                reps = 10,
+                pauseSeconds = 90,
+                orderIndex = 0,
+            ),
+            Exercise(
+                id = 2,
+                workoutId = 1,
+                name = "Overhead Press",
+                sets = 3,
+                reps = 8,
+                pauseSeconds = 90,
+                orderIndex = 1,
+            ),
+            Exercise(
+                id = 3,
+                workoutId = 1,
+                name = "Tricep Dips",
+                sets = 4,
+                reps = 12,
+                pauseSeconds = 60,
+                orderIndex = 2,
+            ),
+        ),
+        onBack = {},
+        onAddExercise = { _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _ -> },
+        onDeleteExercise = {},
+        onMoveExercise = { _, _ -> },
+    )
+}
+
+@Preview("WorkoutEdit - Empty", showBackground = true)
+@Composable
+private fun WorkoutEditContentEmptyPreview() {
+    WorkoutEditContent(
+        title = "New Workout",
+        exercises = emptyList(),
+        onBack = {},
+        onAddExercise = { _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _ -> },
+        onDeleteExercise = {},
+        onMoveExercise = { _, _ -> },
+    )
 }
 
 @Preview("ExerciseCard", showBackground = true)
