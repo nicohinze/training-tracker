@@ -10,9 +10,9 @@ import org.junit.Test
 
 class ActiveWorkoutUiStateTest {
     private val exercises = listOf(
-        Exercise(id = 1, workoutId = 1, name = "Bench Press", sets = 3, reps = 10, pauseSeconds = 90, orderIndex = 0),
-        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, reps = 8, pauseSeconds = 120, orderIndex = 1),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 2, reps = 12, pauseSeconds = 60, orderIndex = 2),
+        Exercise(id = 1, workoutId = 1, name = "Bench Press", sets = 3, amount = 10, pauseSeconds = 90, orderIndex = 0),
+        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, amount = 8, pauseSeconds = 120, orderIndex = 1),
+        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 2, amount = 12, pauseSeconds = 60, orderIndex = 2),
     )
 
     @Test

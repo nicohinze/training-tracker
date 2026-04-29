@@ -99,7 +99,7 @@ class WorkoutDaoTest {
                 workoutId = workoutId,
                 name = "Bench Press",
                 sets = 3,
-                reps = 10,
+                amount = 10,
                 pauseSeconds = 90,
                 orderIndex = 0,
             ),
@@ -109,7 +109,7 @@ class WorkoutDaoTest {
                 workoutId = workoutId,
                 name = "Squats",
                 sets = 4,
-                reps = 8,
+                amount = 8,
                 pauseSeconds = 120,
                 orderIndex = 1,
             ),
@@ -125,13 +125,13 @@ class WorkoutDaoTest {
     fun getExercisesForWorkout_orderedByOrderIndex() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Third", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 2),
+            Exercise(workoutId = workoutId, name = "Third", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 2),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "First", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "First", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Second", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "Second", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
 
         val exercises = dao.getExercisesForWorkout(workoutId).first()
@@ -144,10 +144,10 @@ class WorkoutDaoTest {
     fun getExerciseListForWorkout_returnsSuspendList() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "A", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "A", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "B", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "B", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
 
         val list = dao.getExerciseListForWorkout(workoutId)
@@ -160,17 +160,17 @@ class WorkoutDaoTest {
     fun updateExercise() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         val exId = dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Old", sets = 3, reps = 10, pauseSeconds = 60, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "Old", sets = 3, amount = 10, pauseSeconds = 60, orderIndex = 0),
         )
 
         val exercises = dao.getExercisesForWorkout(workoutId).first()
         val exercise = exercises.first { it.id == exId }
-        dao.updateExercise(exercise.copy(name = "New", sets = 5, reps = 8, pauseSeconds = 120))
+        dao.updateExercise(exercise.copy(name = "New", sets = 5, amount = 8, pauseSeconds = 120))
 
         val updated = dao.getExercisesForWorkout(workoutId).first().first { it.id == exId }
         assertEquals("New", updated.name)
         assertEquals(5, updated.sets)
-        assertEquals(8, updated.reps)
+        assertEquals(8, updated.amount)
         assertEquals(120, updated.pauseSeconds)
     }
 
@@ -178,10 +178,10 @@ class WorkoutDaoTest {
     fun deleteExercise() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Keep", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "Keep", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         val deleteId = dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Remove", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "Remove", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
 
         val toDelete = dao.getExercisesForWorkout(workoutId).first().first { it.id == deleteId }
@@ -196,10 +196,10 @@ class WorkoutDaoTest {
     fun deleteWorkout_cascadesDeleteToExercises() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "A", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "A", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "B", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "B", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
 
         val workout = dao.getWorkout(workoutId)!!
@@ -219,13 +219,13 @@ class WorkoutDaoTest {
     fun getMaxOrderIndex_returnsHighestIndex() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "A", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "A", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "B", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 5),
+            Exercise(workoutId = workoutId, name = "B", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 5),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "C", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 3),
+            Exercise(workoutId = workoutId, name = "C", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 3),
         )
 
         assertEquals(5, dao.getMaxOrderIndex(workoutId))
@@ -235,13 +235,13 @@ class WorkoutDaoTest {
     fun reorderExercises_updatesOrderIndices() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "A", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "A", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "B", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "B", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "C", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 2),
+            Exercise(workoutId = workoutId, name = "C", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 2),
         )
 
         val original = dao.getExerciseListForWorkout(workoutId)
@@ -258,10 +258,10 @@ class WorkoutDaoTest {
     fun getWorkoutWithExercises_returnsBothInTransaction() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Full Workout"))
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Ex1", sets = 3, reps = 10, pauseSeconds = 60, orderIndex = 0),
+            Exercise(workoutId = workoutId, name = "Ex1", sets = 3, amount = 10, pauseSeconds = 60, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "Ex2", sets = 4, reps = 8, pauseSeconds = 90, orderIndex = 1),
+            Exercise(workoutId = workoutId, name = "Ex2", sets = 4, amount = 8, pauseSeconds = 90, orderIndex = 1),
         )
 
         val (workout, exercises) = dao.getWorkoutWithExercises(workoutId)
@@ -285,13 +285,13 @@ class WorkoutDaoTest {
         val id2 = dao.insertWorkout(Workout(name = "Workout 2"))
 
         dao.insertExercise(
-            Exercise(workoutId = id1, name = "W1-Ex", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = id1, name = "W1-Ex", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = id2, name = "W2-Ex1", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 0),
+            Exercise(workoutId = id2, name = "W2-Ex1", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
         )
         dao.insertExercise(
-            Exercise(workoutId = id2, name = "W2-Ex2", sets = 1, reps = 1, pauseSeconds = 0, orderIndex = 1),
+            Exercise(workoutId = id2, name = "W2-Ex2", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
         )
 
         assertEquals(1, dao.getExercisesForWorkout(id1).first().size)

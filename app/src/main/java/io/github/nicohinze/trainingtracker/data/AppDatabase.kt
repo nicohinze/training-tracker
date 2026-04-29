@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Workout::class, Exercise::class], version = 2)
+@Database(entities = [Workout::class, Exercise::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 
@@ -21,13 +21,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE exercises RENAME COLUMN reps TO amount")
+                db.execSQL("ALTER TABLE exercises ADD COLUMN type TEXT NOT NULL DEFAULT 'REPS'")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase = instance ?: synchronized(this) {
             val inst = Room
                 .databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "workout_database",
-                ).addMigrations(MIGRATION_1_2)
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
             instance = inst
             inst

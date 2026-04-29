@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Exercise
+import io.github.nicohinze.trainingtracker.data.ExerciseType
 import io.github.nicohinze.trainingtracker.data.Workout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,8 +37,9 @@ class WorkoutEditViewModel(
     fun addExercise(
         name: String,
         sets: Int,
-        reps: Int,
+        amount: Int,
         pauseSeconds: Int,
+        type: ExerciseType,
     ) {
         viewModelScope.launch {
             val maxOrder = dao.getMaxOrderIndex(workoutId)
@@ -46,7 +48,8 @@ class WorkoutEditViewModel(
                     workoutId = workoutId,
                     name = name,
                     sets = sets,
-                    reps = reps,
+                    amount = amount,
+                    type = type,
                     pauseSeconds = pauseSeconds,
                     orderIndex = maxOrder + 1,
                 ),
@@ -58,12 +61,13 @@ class WorkoutEditViewModel(
         exercise: Exercise,
         name: String,
         sets: Int,
-        reps: Int,
+        amount: Int,
         pauseSeconds: Int,
+        type: ExerciseType,
     ) {
         viewModelScope.launch {
             dao.updateExercise(
-                exercise.copy(name = name, sets = sets, reps = reps, pauseSeconds = pauseSeconds),
+                exercise.copy(name = name, sets = sets, amount = amount, type = type, pauseSeconds = pauseSeconds),
             )
         }
     }
