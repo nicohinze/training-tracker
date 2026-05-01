@@ -27,6 +27,7 @@ data class ActiveWorkoutUiState(
     val completedSets: Int = 0,
     val state: ActiveState = ActiveState.READY,
     val remainingSeconds: Int = 0,
+    val elapsedSeconds: Long = 0,
 ) {
     val currentExercise: Exercise? get() = exercises.getOrNull(currentExerciseIndex)
     val totalSets: Int get() = currentExercise?.sets ?: 0
@@ -43,6 +44,7 @@ class ActiveWorkoutViewModel(
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState = _uiState.asStateFlow()
     private var timerJob: Job? = null
+    private var elapsedJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -63,7 +65,14 @@ class ActiveWorkoutViewModel(
             state = ActiveState.EXERCISING,
             currentExerciseIndex = 0,
             completedSets = 0,
+            elapsedSeconds = 0,
         )
+        elapsedJob = viewModelScope.launch {
+            while (true) {
+                delay(1000L)
+                _uiState.value = _uiState.value.copy(elapsedSeconds = _uiState.value.elapsedSeconds + 1)
+            }
+        }
     }
 
     fun onSetFinished() {
@@ -74,8 +83,9 @@ class ActiveWorkoutViewModel(
         val newCompleted = current.completedSets + 1
         val updated = current.copy(completedSets = newCompleted)
         if (updated.isLastSetOfExercise && updated.isLastExercise) {
+            elapsedJob?.cancel()
             _uiState.value = updated.copy(state = ActiveState.FINISHED)
-            viewModelScope.launch { dao.incrementCompletionCount(workoutId) }
+            viewModelScope.launch { dao.completeWorkout(workoutId, updated.elapsedSeconds) }
             return
         }
         if (updated.isLastSetOfExercise) {

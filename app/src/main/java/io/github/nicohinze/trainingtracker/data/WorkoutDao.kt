@@ -43,8 +43,10 @@ interface WorkoutDao {
     @Query("SELECT COALESCE(MAX(orderIndex), -1) FROM exercises WHERE workoutId = :workoutId")
     suspend fun getMaxOrderIndex(workoutId: Long): Int
 
-    @Query("UPDATE workouts SET completionCount = completionCount + 1 WHERE id = :workoutId")
-    suspend fun incrementCompletionCount(workoutId: Long)
+    @Query(
+        "UPDATE workouts SET completionCount = completionCount + 1, totalDurationSeconds = totalDurationSeconds + :durationSeconds WHERE id = :workoutId",
+    )
+    suspend fun completeWorkout(workoutId: Long, durationSeconds: Long)
 
     @Transaction
     suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {

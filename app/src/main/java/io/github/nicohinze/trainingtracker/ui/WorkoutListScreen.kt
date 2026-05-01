@@ -38,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Workout
+import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
 
 @Composable
@@ -165,7 +166,9 @@ private fun WorkoutCard(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Completed ${workout.completionCount} ×",
+                    text = "Completed: ${workout.completionCount} | Total: ${formatDuration(
+                        workout.totalDurationSeconds,
+                    )}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
