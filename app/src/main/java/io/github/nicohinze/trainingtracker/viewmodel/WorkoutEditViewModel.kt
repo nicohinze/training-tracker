@@ -38,8 +38,9 @@ class WorkoutEditViewModel(
         name: String,
         sets: Int,
         amount: Int,
-        pauseSeconds: Int,
         type: ExerciseType,
+        intensity: String?,
+        pauseSeconds: Int,
     ) {
         viewModelScope.launch {
             val maxOrder = dao.getMaxOrderIndex(workoutId)
@@ -50,6 +51,7 @@ class WorkoutEditViewModel(
                     sets = sets,
                     amount = amount,
                     type = type,
+                    intensity = intensity,
                     pauseSeconds = pauseSeconds,
                     orderIndex = maxOrder + 1,
                 ),
@@ -62,12 +64,20 @@ class WorkoutEditViewModel(
         name: String,
         sets: Int,
         amount: Int,
-        pauseSeconds: Int,
         type: ExerciseType,
+        intensity: String?,
+        pauseSeconds: Int,
     ) {
         viewModelScope.launch {
             dao.updateExercise(
-                exercise.copy(name = name, sets = sets, amount = amount, type = type, pauseSeconds = pauseSeconds),
+                exercise.copy(
+                    name = name,
+                    sets = sets,
+                    amount = amount,
+                    type = type,
+                    intensity = intensity,
+                    pauseSeconds = pauseSeconds,
+                ),
             )
         }
     }

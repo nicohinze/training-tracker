@@ -61,9 +61,11 @@ fun WorkoutEditScreen(
         title = workout?.name ?: "Edit Workout",
         exercises = exercises,
         onBack = onBack,
-        onAddExercise = { name, sets, amount, pause, type -> viewModel.addExercise(name, sets, amount, pause, type) },
-        onUpdateExercise = { exercise, name, sets, amount, pause, type ->
-            viewModel.updateExercise(exercise, name, sets, amount, pause, type)
+        onAddExercise = { name, sets, amount, type, intensity, pause ->
+            viewModel.addExercise(name, sets, amount, type, intensity, pause)
+        },
+        onUpdateExercise = { exercise, name, sets, amount, type, intensity, pause ->
+            viewModel.updateExercise(exercise, name, sets, amount, type, intensity, pause)
         },
         onDeleteExercise = { viewModel.deleteExercise(it) },
         onMoveExercise = { from, to -> viewModel.moveExercise(from, to, exercises) },
@@ -76,8 +78,8 @@ private fun WorkoutEditContent(
     title: String,
     exercises: List<Exercise>,
     onBack: () -> Unit,
-    onAddExercise: (String, Int, Int, Int, ExerciseType) -> Unit,
-    onUpdateExercise: (Exercise, String, Int, Int, Int, ExerciseType) -> Unit,
+    onAddExercise: (String, Int, Int, ExerciseType, String?, Int) -> Unit,
+    onUpdateExercise: (Exercise, String, Int, Int, ExerciseType, String?, Int) -> Unit,
     onDeleteExercise: (Exercise) -> Unit,
     onMoveExercise: (Int, Int) -> Unit,
 ) {
@@ -123,8 +125,8 @@ private fun WorkoutEditContent(
             ExerciseDialog(
                 title = "Add Exercise",
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name, sets, amount, pause, type ->
-                    onAddExercise(name, sets, amount, pause, type)
+                onConfirm = { name, sets, amount, type, intensity, pause ->
+                    onAddExercise(name, sets, amount, type, intensity, pause)
                     showAddDialog = false
                 },
             )
@@ -136,10 +138,11 @@ private fun WorkoutEditContent(
                 initialSets = exercise.sets,
                 initialAmount = exercise.amount,
                 initialType = exercise.type,
+                initialIntensity = exercise.intensity.orEmpty(),
                 initialPause = exercise.pauseSeconds,
                 onDismiss = { editingExercise = null },
-                onConfirm = { name, sets, amount, pause, type ->
-                    onUpdateExercise(exercise, name, sets, amount, pause, type)
+                onConfirm = { name, sets, amount, type, intensity, pause ->
+                    onUpdateExercise(exercise, name, sets, amount, type, intensity, pause)
                     editingExercise = null
                 },
             )
@@ -203,6 +206,9 @@ private fun ExerciseCard(
                         } else {
                             append("${exercise.amount} reps")
                         }
+                        if (!exercise.intensity.isNullOrBlank()) {
+                            append(" @ ${exercise.intensity}")
+                        }
                         append(" | ${exercise.pauseSeconds} s rest")
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -238,15 +244,17 @@ private fun ExerciseDialog(
     initialSets: Int = 3,
     initialAmount: Int = 10,
     initialType: ExerciseType = ExerciseType.REPS,
+    initialIntensity: String = "",
     initialPause: Int = 90,
     onDismiss: () -> Unit,
-    onConfirm: (String, Int, Int, Int, ExerciseType) -> Unit,
+    onConfirm: (String, Int, Int, ExerciseType, String?, Int) -> Unit,
 ) {
     var name by remember { mutableStateOf(initialName) }
     var sets by remember { mutableStateOf(initialSets.toString()) }
     var amount by remember { mutableStateOf(initialAmount.toString()) }
-    var pause by remember { mutableStateOf(initialPause.toString()) }
     var type by remember { mutableStateOf(initialType) }
+    var intensity by remember { mutableStateOf(initialIntensity) }
+    var pause by remember { mutableStateOf(initialPause.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -261,6 +269,8 @@ private fun ExerciseDialog(
                 onAmountChange = { amount = it.filter { c -> c.isDigit() } },
                 type = type,
                 onTypeChange = { type = it },
+                intensity = intensity,
+                onIntensityChange = { intensity = it },
                 pause = pause,
                 onPauseChange = { pause = it.filter { c -> c.isDigit() } },
             )
@@ -272,8 +282,9 @@ private fun ExerciseDialog(
                         name.trim(),
                         sets.toIntOrNull() ?: 1,
                         amount.toIntOrNull() ?: 1,
-                        pause.toIntOrNull() ?: 0,
                         type,
+                        intensity.trim().ifBlank { null },
+                        pause.toIntOrNull() ?: 0,
                     )
                 },
                 enabled = name.isNotBlank() && (sets.toIntOrNull() ?: 0) > 0 && (amount.toIntOrNull() ?: 0) > 0,
@@ -298,10 +309,12 @@ private fun ExerciseDialogContent(
     onSetsChange: (String) -> Unit,
     amount: String,
     onAmountChange: (String) -> Unit,
-    pause: String,
-    onPauseChange: (String) -> Unit,
     type: ExerciseType,
     onTypeChange: (ExerciseType) -> Unit,
+    intensity: String,
+    onIntensityChange: (String) -> Unit,
+    pause: String,
+    onPauseChange: (String) -> Unit,
 ) {
     Column {
         OutlinedTextField(
@@ -342,6 +355,15 @@ private fun ExerciseDialogContent(
                 modifier = Modifier.weight(1f),
             )
         }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = intensity,
+            onValueChange = onIntensityChange,
+            label = { Text("Intensity") },
+            placeholder = { Text("e.g. 20 kg, rings at 110 cm") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = pause,
@@ -387,7 +409,7 @@ private fun WorkoutEditContentPreview() {
             Exercise(
                 id = 3,
                 workoutId = 1,
-                name = "Tricep Dips",
+                name = "Triceps Dips",
                 sets = 4,
                 amount = 12,
                 pauseSeconds = 60,
@@ -395,8 +417,8 @@ private fun WorkoutEditContentPreview() {
             ),
         ),
         onBack = {},
-        onAddExercise = { _, _, _, _, _ -> },
-        onUpdateExercise = { _, _, _, _, _, _ -> },
+        onAddExercise = { _, _, _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _, _, _ -> },
         onDeleteExercise = {},
         onMoveExercise = { _, _ -> },
     )
@@ -409,8 +431,8 @@ private fun WorkoutEditContentEmptyPreview() {
         title = "New Workout",
         exercises = emptyList(),
         onBack = {},
-        onAddExercise = { _, _, _, _, _ -> },
-        onUpdateExercise = { _, _, _, _, _, _ -> },
+        onAddExercise = { _, _, _, _, _, _ -> },
+        onUpdateExercise = { _, _, _, _, _, _, _ -> },
         onDeleteExercise = {},
         onMoveExercise = { _, _ -> },
     )
@@ -450,6 +472,8 @@ private fun ExerciseDialogContentAddPreview() {
         onAmountChange = {},
         type = ExerciseType.REPS,
         onTypeChange = {},
+        intensity = "20 kg",
+        onIntensityChange = {},
         pause = "90",
         onPauseChange = {},
     )

@@ -384,7 +384,11 @@ private fun ExerciseRow(
             color = if (highlighted) contentColor else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            exercise.name,
+            if (exercise.intensity.isNullOrBlank()) {
+                exercise.name
+            } else {
+                "${exercise.name} @ ${exercise.intensity}"
+            },
             modifier = Modifier.weight(2f),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
@@ -491,6 +495,7 @@ private fun ReadyContentPreview() {
                 name = "Bench Press",
                 sets = 3,
                 amount = 10,
+                intensity = "50 kg",
                 pauseSeconds = 90,
                 orderIndex = 0,
             ),
@@ -519,6 +524,7 @@ private fun ReadyContentPreview() {
                 sets = 2,
                 amount = 12,
                 type = ExerciseType.SECONDS,
+                intensity = "10 kg",
                 pauseSeconds = 60,
                 orderIndex = 3,
             ),
@@ -546,6 +552,7 @@ private fun ExercisingContentRepsPreview() {
             name = "Bench Press",
             sets = 3,
             amount = 10,
+            intensity = "50 kg",
             pauseSeconds = 90,
             orderIndex = 0,
         ),
@@ -558,6 +565,7 @@ private fun ExercisingContentRepsPreview() {
             sets = 2,
             amount = 12,
             type = ExerciseType.SECONDS,
+            intensity = "10 kg",
             pauseSeconds = 60,
             orderIndex = 3,
         ),
@@ -565,8 +573,8 @@ private fun ExercisingContentRepsPreview() {
     )
     ExercisingContent(
         exercises = exercises,
-        currentExerciseIndex = 1,
-        completedSets = 2,
+        currentExerciseIndex = 3,
+        completedSets = 1,
         onSetDone = {},
     )
 }
@@ -581,6 +589,7 @@ private fun ExercisingContentSecondsPreview() {
             name = "Bench Press",
             sets = 3,
             amount = 10,
+            intensity = "50 kg",
             pauseSeconds = 90,
             orderIndex = 0,
         ),
@@ -602,6 +611,7 @@ private fun ExercisingContentSecondsPreview() {
             sets = 2,
             amount = 12,
             type = ExerciseType.SECONDS,
+            intensity = "10 kg",
             pauseSeconds = 60,
             orderIndex = 3,
         ),
@@ -609,8 +619,8 @@ private fun ExercisingContentSecondsPreview() {
     )
     ExercisingContent(
         exercises = exercises,
-        currentExerciseIndex = 1,
-        completedSets = 2,
+        currentExerciseIndex = 3,
+        completedSets = 1,
         onSetDone = {},
     )
 }
@@ -625,6 +635,7 @@ private fun RestingContentPreview() {
             name = "Bench Press",
             sets = 3,
             amount = 10,
+            intensity = "50 kg",
             pauseSeconds = 90,
             orderIndex = 0,
         ),
@@ -637,6 +648,7 @@ private fun RestingContentPreview() {
             sets = 2,
             amount = 12,
             type = ExerciseType.SECONDS,
+            intensity = "10 kg",
             pauseSeconds = 60,
             orderIndex = 3,
         ),
@@ -644,8 +656,8 @@ private fun RestingContentPreview() {
     )
     RestingContent(
         exercises = exercises,
-        currentExerciseIndex = 1,
-        completedSets = 2,
+        currentExerciseIndex = 3,
+        completedSets = 1,
         7,
         10,
     )

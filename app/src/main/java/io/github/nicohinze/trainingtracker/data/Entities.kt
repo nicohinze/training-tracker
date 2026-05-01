@@ -36,6 +36,7 @@ data class Exercise(
     val sets: Int,
     val amount: Int,
     val type: ExerciseType = ExerciseType.REPS,
+    val intensity: String? = null,
     val pauseSeconds: Int,
     val orderIndex: Int,
 )
