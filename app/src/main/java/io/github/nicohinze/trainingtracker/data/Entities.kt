@@ -10,6 +10,7 @@ data class Workout(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val completionCount: Int = 0,
+    val totalDurationSeconds: Long = 0,
 )
 
 enum class ExerciseType {

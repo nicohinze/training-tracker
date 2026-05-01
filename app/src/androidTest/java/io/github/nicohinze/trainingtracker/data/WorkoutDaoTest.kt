@@ -81,14 +81,15 @@ class WorkoutDaoTest {
     }
 
     @Test
-    fun incrementCompletionCount() = runTest {
+    fun completeWorkout() = runTest {
         val id = dao.insertWorkout(Workout(name = "Test"))
-        dao.incrementCompletionCount(id)
-        dao.incrementCompletionCount(id)
-        dao.incrementCompletionCount(id)
+        dao.completeWorkout(id, 120)
+        dao.completeWorkout(id, 180)
+        dao.completeWorkout(id, 60)
 
         val workout = dao.getWorkout(id)!!
         assertEquals(3, workout.completionCount)
+        assertEquals(360L, workout.totalDurationSeconds)
     }
 
     @Test

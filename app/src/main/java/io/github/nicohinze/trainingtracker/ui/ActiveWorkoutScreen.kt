@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.ExerciseType
+import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveState
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutViewModel
 
@@ -84,6 +85,15 @@ fun ActiveWorkoutScreen(
                         }
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState.state == ActiveState.EXERCISING || uiState.state == ActiveState.RESTING) {
+                        Text(
+                            text = formatDuration(uiState.elapsedSeconds),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(end = 16.dp),
+                        )
                     }
                 },
             )
@@ -127,7 +137,10 @@ fun ActiveWorkoutScreen(
                     }
 
                     ActiveState.FINISHED -> {
-                        FinishedContent(onDone = onBack)
+                        FinishedContent(
+                            elapsedSeconds = uiState.elapsedSeconds,
+                            onDone = onBack,
+                        )
                     }
                 }
             }
@@ -274,7 +287,10 @@ private fun RestingContent(
 }
 
 @Composable
-private fun FinishedContent(onDone: () -> Unit) {
+private fun FinishedContent(
+    elapsedSeconds: Long,
+    onDone: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -286,6 +302,12 @@ private fun FinishedContent(onDone: () -> Unit) {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = formatDuration(elapsedSeconds),
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(32.dp))
         Button(
@@ -661,4 +683,10 @@ private fun RestingContentPreview() {
         7,
         10,
     )
+}
+
+@Preview("FinishedContent", showBackground = true)
+@Composable
+private fun FinishedContentPreview() {
+    FinishedContent(1 * 60 * 60 + 9 * 60 + 9, { })
 }
