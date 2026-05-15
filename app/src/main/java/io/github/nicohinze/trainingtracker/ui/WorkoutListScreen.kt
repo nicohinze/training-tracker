@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -54,6 +55,7 @@ fun WorkoutListScreen(
         onStartWorkout = onStartWorkout,
         onAddWorkout = { viewModel.addWorkout(it) },
         onDeleteWorkout = { viewModel.deleteWorkout(it) },
+        onRenameWorkout = { workout, newName -> viewModel.renameWorkout(workout, newName) },
     )
 }
 
@@ -65,9 +67,11 @@ private fun WorkoutListContent(
     onStartWorkout: (Long) -> Unit,
     onAddWorkout: (String) -> Unit,
     onDeleteWorkout: (Workout) -> Unit,
+    onRenameWorkout: (Workout, String) -> Unit,
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
+    var workoutToRename by remember { mutableStateOf<Workout?>(null) }
 
     Scaffold(
         topBar = {
@@ -104,6 +108,7 @@ private fun WorkoutListContent(
                         onEdit = { onEditWorkout(workout.id) },
                         onStart = { onStartWorkout(workout.id) },
                         onDelete = { workoutToDelete = workout },
+                        onRename = { workoutToRename = workout },
                     )
                 }
             }
@@ -137,6 +142,16 @@ private fun WorkoutListContent(
                 },
             )
         }
+        workoutToRename?.let { workout ->
+            RenameWorkoutDialog(
+                currentName = workout.name,
+                onDismiss = { workoutToRename = null },
+                onConfirm = { newName ->
+                    onRenameWorkout(workout, newName)
+                    workoutToRename = null
+                },
+            )
+        }
     }
 }
 
@@ -146,6 +161,7 @@ private fun WorkoutCard(
     onEdit: () -> Unit,
     onStart: () -> Unit,
     onDelete: () -> Unit,
+    onRename: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -166,9 +182,11 @@ private fun WorkoutCard(
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
-                    text = "Completed: ${workout.completionCount} | Total: ${formatDuration(
-                        workout.totalDurationSeconds,
-                    )}",
+                    text = "Completed: ${workout.completionCount} | Total: ${
+                        formatDuration(
+                            workout.totalDurationSeconds,
+                        )
+                    }",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -178,6 +196,12 @@ private fun WorkoutCard(
                     Icons.Default.PlayArrow,
                     contentDescription = "Start workout",
                     tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+            IconButton(onClick = onRename) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Rename workout",
                 )
             }
             IconButton(onClick = onDelete) {
@@ -202,7 +226,13 @@ private fun AddWorkoutDialog(
         onDismissRequest = onDismiss,
         title = { Text("New Workout") },
         text = {
-            AddWorkoutDialogContent(name = name, onNameChange = { name = it })
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Workout name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
         },
         confirmButton = {
             TextButton(
@@ -221,16 +251,38 @@ private fun AddWorkoutDialog(
 }
 
 @Composable
-private fun AddWorkoutDialogContent(
-    name: String,
-    onNameChange: (String) -> Unit,
+private fun RenameWorkoutDialog(
+    currentName: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
 ) {
-    OutlinedTextField(
-        value = name,
-        onValueChange = onNameChange,
-        label = { Text("Workout name") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
+    var name by remember { mutableStateOf(currentName) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rename Workout") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Workout name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(name.trim()) },
+                enabled = name.isNotBlank() && name.trim() != currentName,
+            ) {
+                Text("Rename")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
     )
 }
 
@@ -247,6 +299,7 @@ private fun WorkoutListContentPreview() {
         onStartWorkout = {},
         onAddWorkout = {},
         onDeleteWorkout = {},
+        onRenameWorkout = { _, _ -> },
     )
 }
 
@@ -259,6 +312,7 @@ private fun WorkoutListContentEmptyPreview() {
         onStartWorkout = {},
         onAddWorkout = {},
         onDeleteWorkout = {},
+        onRenameWorkout = { _, _ -> },
     )
 }
 
@@ -270,14 +324,6 @@ private fun WorkoutCardPreview() {
         onEdit = {},
         onStart = {},
         onDelete = {},
-    )
-}
-
-@Preview("AddWorkoutDialogContent", showBackground = true)
-@Composable
-private fun AddWorkoutDialogContentPreview() {
-    AddWorkoutDialogContent(
-        name = "Leg Day",
-        onNameChange = {},
+        onRename = {},
     )
 }
