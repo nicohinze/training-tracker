@@ -583,10 +583,10 @@ private fun ExercisingContentRepsPreview() {
         Exercise(
             id = 4,
             workoutId = 1,
-            name = "Plank",
+            name = "Push-ups",
             sets = 2,
             amount = 12,
-            type = ExerciseType.SECONDS,
+            type = ExerciseType.REPS,
             intensity = "10 kg",
             pauseSeconds = 60,
             orderIndex = 3,
