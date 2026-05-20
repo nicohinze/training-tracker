@@ -61,7 +61,7 @@ fun WorkoutListScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WorkoutListContent(
+internal fun WorkoutListContent(
     workouts: List<Workout>,
     onEditWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
@@ -156,7 +156,7 @@ private fun WorkoutListContent(
 }
 
 @Composable
-private fun WorkoutCard(
+internal fun WorkoutCard(
     workout: Workout,
     onEdit: () -> Unit,
     onStart: () -> Unit,

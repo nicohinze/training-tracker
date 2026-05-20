@@ -179,7 +179,7 @@ fun ActiveWorkoutScreen(
 }
 
 @Composable
-private fun ReadyContent(
+internal fun ReadyContent(
     exercises: List<Exercise>,
     onStart: () -> Unit,
 ) {
@@ -237,7 +237,7 @@ private fun ReadyContent(
 }
 
 @Composable
-private fun ExercisingContent(
+internal fun ExercisingContent(
     exercises: List<Exercise>,
     currentExerciseIndex: Int,
     completedSets: Int,
@@ -261,7 +261,7 @@ private fun ExercisingContent(
 }
 
 @Composable
-private fun RestingContent(
+internal fun RestingContent(
     exercises: List<Exercise>,
     currentExerciseIndex: Int,
     completedSets: Int,
@@ -300,7 +300,7 @@ private fun RestingContent(
 }
 
 @Composable
-private fun FinishedContent(
+internal fun FinishedContent(
     elapsedSeconds: Long,
     onDone: () -> Unit,
 ) {
@@ -577,46 +577,9 @@ private fun ReadyContentPreview() {
     )
 }
 
-@Preview("ExercisingContentReps", showBackground = true)
+@Preview("ExercisingContent", showBackground = true)
 @Composable
-private fun ExercisingContentRepsPreview() {
-    val exercises = listOf(
-        Exercise(
-            id = 1,
-            workoutId = 1,
-            name = "Bench Press",
-            sets = 3,
-            amount = 10,
-            intensity = "50 kg",
-            pauseSeconds = 90,
-            orderIndex = 0,
-        ),
-        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, amount = 8, pauseSeconds = 120, orderIndex = 1),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
-        Exercise(
-            id = 4,
-            workoutId = 1,
-            name = "Push-ups",
-            sets = 2,
-            amount = 12,
-            type = ExerciseType.REPS,
-            intensity = "10 kg",
-            pauseSeconds = 60,
-            orderIndex = 3,
-        ),
-        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
-    )
-    ExercisingContent(
-        exercises = exercises,
-        currentExerciseIndex = 3,
-        completedSets = 1,
-        onSetDone = {},
-    )
-}
-
-@Preview("ExercisingContentSeconds", showBackground = true)
-@Composable
-private fun ExercisingContentSecondsPreview() {
+private fun ExercisingContentPreview() {
     val exercises = listOf(
         Exercise(
             id = 1,
