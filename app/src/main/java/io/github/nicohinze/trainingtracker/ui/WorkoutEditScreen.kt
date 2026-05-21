@@ -74,7 +74,7 @@ fun WorkoutEditScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WorkoutEditContent(
+internal fun WorkoutEditContent(
     title: String,
     exercises: List<Exercise>,
     onBack: () -> Unit,
@@ -171,7 +171,7 @@ private fun WorkoutEditContent(
 }
 
 @Composable
-private fun ExerciseCard(
+internal fun ExerciseCard(
     exercise: Exercise,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
@@ -302,7 +302,7 @@ private fun ExerciseDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExerciseDialogContent(
+internal fun ExerciseDialogContent(
     name: String,
     onNameChange: (String) -> Unit,
     sets: String,

@@ -7,12 +7,14 @@ coroutinesTest = "1.10.2"
 kotlinxSerializationBom = "1.11.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
+composeScreenshot = "0.0.1-alpha14"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
 composeBom = "2026.04.01"
 navigationCompose = "2.9.8"
 ksp = "2.3.2"
 roomKtx = "2.8.4"
+screenshotValidationApi = "0.0.1-alpha14"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,9 +39,11 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "roomKtx" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "roomKtx" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshotValidationApi" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "roomKtx" }
+compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "composeScreenshot" }
