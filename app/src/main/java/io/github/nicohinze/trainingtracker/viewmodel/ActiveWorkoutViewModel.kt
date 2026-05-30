@@ -1,6 +1,7 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
 import android.app.Application
+import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -45,6 +46,7 @@ class ActiveWorkoutViewModel(
     val uiState = _uiState.asStateFlow()
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
+    private var workoutStartRealtime: Long = 0L
 
     init {
         viewModelScope.launch {
@@ -61,6 +63,7 @@ class ActiveWorkoutViewModel(
         if (_uiState.value.exercises.isEmpty()) {
             return
         }
+        workoutStartRealtime = SystemClock.elapsedRealtime()
         _uiState.value = _uiState.value.copy(
             state = ActiveState.EXERCISING,
             currentExerciseIndex = 0,
@@ -70,7 +73,8 @@ class ActiveWorkoutViewModel(
         elapsedJob = viewModelScope.launch {
             while (true) {
                 delay(1000L)
-                _uiState.value = _uiState.value.copy(elapsedSeconds = _uiState.value.elapsedSeconds + 1)
+                val elapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime) / 1000
+                _uiState.value = _uiState.value.copy(elapsedSeconds = elapsed)
             }
         }
     }
@@ -133,8 +137,11 @@ class ActiveWorkoutViewModel(
         )
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            for (remaining in pauseSeconds - 1 downTo 0) {
+            val restStartRealtime = SystemClock.elapsedRealtime()
+            while (true) {
                 delay(1000L)
+                val elapsedMs = SystemClock.elapsedRealtime() - restStartRealtime
+                val remaining = pauseSeconds - (elapsedMs / 1000).toInt()
                 if (remaining > 0) {
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
@@ -144,6 +151,7 @@ class ActiveWorkoutViewModel(
                         completedSets = nextSet,
                         remainingSeconds = 0,
                     )
+                    break
                 }
             }
         }
