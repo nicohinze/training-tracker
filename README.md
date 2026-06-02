@@ -16,10 +16,12 @@ An Android app for creating and running workouts with a set-tracking rest timer.
 
 ## Features
 
-- Create, edit, and delete workouts
+- Create, edit, rename, and delete workouts
 - Add exercises to workouts with configurable sets, reps, rest duration, and intensity
+- Exercise types: reps-based and time-based
 - Run workouts with an interactive timer that tracks sets and rest periods
 - Total run-time display for active workouts
+- Screen stays on during active workouts
 
 ## Building
 
