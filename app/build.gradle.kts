@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "io.github.nicohinze.trainingtracker"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "io.github.nicohinze.trainingtracker"
         minSdk = 34
@@ -39,6 +39,7 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.kotlinx.coroutines.bom))
     implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.kotlinx.serialization.bom))
     implementation(libs.androidx.core.ktx)
