@@ -10,13 +10,33 @@ import io.github.nicohinze.trainingtracker.ui.theme.TrainingTrackerTheme
 @PreviewTest
 @PreviewLightDark
 @Composable
-fun WorkoutListPopulatedScreenshot() {
+fun WorkoutListPopulatedScreenshotZeroRuntime() {
     TrainingTrackerTheme(dynamicColor = false) {
         WorkoutListContent(
             workouts = listOf(
-                Workout(id = 1, name = "Push Day", completionCount = 5),
-                Workout(id = 2, name = "Pull Day", completionCount = 3),
-                Workout(id = 3, name = "Leg Day", completionCount = 0),
+                Workout(id = 1, name = "Push Day"),
+                Workout(id = 2, name = "Pull Day"),
+                Workout(id = 3, name = "Leg Day"),
+            ),
+            onEditWorkout = {},
+            onStartWorkout = {},
+            onAddWorkout = {},
+            onDeleteWorkout = {},
+            onRenameWorkout = { _, _ -> },
+        )
+    }
+}
+
+@PreviewTest
+@PreviewLightDark
+@Composable
+fun WorkoutListPopulatedScreenshotNonZeroRuntime() {
+    TrainingTrackerTheme(dynamicColor = false) {
+        WorkoutListContent(
+            workouts = listOf(
+                Workout(id = 1, name = "Push Day", completionCount = 5, totalDurationSeconds = 23456),
+                Workout(id = 2, name = "Pull Day", completionCount = 3, totalDurationSeconds = 12345),
+                Workout(id = 3, name = "Leg Day", completionCount = 0, totalDurationSeconds = 0),
             ),
             onEditWorkout = {},
             onStartWorkout = {},
@@ -50,7 +70,7 @@ fun WorkoutCardScreenshot() {
     TrainingTrackerTheme(dynamicColor = false) {
         Surface {
             WorkoutCard(
-                workout = Workout(id = 1, name = "Push Day", completionCount = 5),
+                workout = Workout(id = 1, name = "Push Day", completionCount = 5, totalDurationSeconds = 23456),
                 onEdit = {},
                 onStart = {},
                 onDelete = {},
