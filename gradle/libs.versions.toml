@@ -14,6 +14,7 @@ composeBom = "2026.05.01"
 navigationCompose = "2.9.8"
 ksp = "2.3.2"
 roomKtx = "2.8.4"
+ktlint = "14.2.0"
 screenshotValidationApi = "0.0.1-alpha15"
 
 [libraries]
@@ -48,3 +49,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "roomKtx" }
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "composeScreenshot" }
+ktlint-plugin = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

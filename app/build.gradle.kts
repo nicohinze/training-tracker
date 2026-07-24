@@ -1,9 +1,12 @@
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
     alias(libs.plugins.compose.screenshot)
+    alias(libs.plugins.ktlint.plugin)
 }
 
 android {
@@ -43,6 +46,14 @@ android {
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     room {
         schemaDirectory("$projectDir/schemas")
+    }
+}
+
+ktlint {
+    android = true
+    ignoreFailures = false
+    reporters {
+        reporter(ReporterType.PLAIN)
     }
 }
 
