@@ -17,19 +17,13 @@ permissions:
 
 jobs:
   lint:
-    permissions:
-      contents: read
-      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build
       - name: Run ktlint
-        uses: ScaCap/action-ktlint@b28e095f1b6f67fa80a2a019c5043e470267baab # master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          fail_on_error: true
+        run: ./gradlew ktlintCheck
 
   unit-test:
     runs-on: ubuntu-latest
