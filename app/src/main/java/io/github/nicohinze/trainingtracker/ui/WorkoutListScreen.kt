@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -33,10 +34,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -75,6 +75,8 @@ internal fun WorkoutListContent(
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
     var workoutToRename by remember { mutableStateOf<Workout?>(null) }
 
+    val totalRuntime = workouts.sumOf { it.totalDurationSeconds }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("My Workouts") })
@@ -85,33 +87,47 @@ internal fun WorkoutListContent(
             }
         },
     ) { padding ->
-        if (workouts.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center,
-            ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            if (totalRuntime > 0) {
                 Text(
-                    "No workouts yet.\nTap + to create one.",
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "Total runtime: ${formatDuration(totalRuntime)}",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
-                items(workouts, key = { it.id }) { workout ->
-                    WorkoutCard(
-                        workout = workout,
-                        onEdit = { onEditWorkout(workout.id) },
-                        onStart = { onStartWorkout(workout.id) },
-                        onDelete = { workoutToDelete = workout },
-                        onRename = { workoutToRename = workout },
+            if (workouts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        "No workouts yet.\nTap + to create one.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                ) {
+                    items(workouts, key = { it.id }) { workout ->
+                        WorkoutCard(
+                            workout = workout,
+                            onEdit = { onEditWorkout(workout.id) },
+                            onStart = { onStartWorkout(workout.id) },
+                            onDelete = { workoutToDelete = workout },
+                            onRename = { workoutToRename = workout },
+                        )
+                    }
                 }
             }
         }
@@ -295,9 +311,10 @@ private fun RenameWorkoutDialog(
 private fun WorkoutListContentPreview() {
     WorkoutListContent(
         workouts = listOf(
-            Workout(id = 1, name = "Push Day", completionCount = 5),
-            Workout(id = 2, name = "Pull Day", completionCount = 3),
-            Workout(id = 3, name = "Leg Day", completionCount = 0),
+            Workout(id = 1, name = "Push Day", completionCount = 5, totalDurationSeconds = 5 * 60 * 60 + 576),
+            Workout(id = 2, name = "Pull Day", completionCount = 3, totalDurationSeconds = 3 * 60 * 60 + 123),
+            Workout(id = 3, name = "Leg Day", completionCount = 0, totalDurationSeconds = 0),
+            Workout(id = 4, name = "All Day", completionCount = 999, totalDurationSeconds = 999 * 60 * 60 + 9999),
         ),
         onEditWorkout = {},
         onStartWorkout = {},
