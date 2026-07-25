@@ -16,6 +16,15 @@ permissions:
   contents: read
 
 jobs:
+  android-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build
+      - name: Run Android lint
+        run: ./gradlew lintDebug
+
   detekt:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -25,7 +34,7 @@ jobs:
       - name: Run detekt
         run: ./gradlew detekt
 
-  lint:
+  ktlint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
