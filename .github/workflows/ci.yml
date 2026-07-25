@@ -16,6 +16,15 @@ permissions:
   contents: read
 
 jobs:
+  detekt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-build
+      - name: Run detekt
+        run: ./gradlew detekt
+
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
