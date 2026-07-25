@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.room)
     alias(libs.plugins.compose.screenshot)
     alias(libs.plugins.ktlint.plugin)
+    alias(libs.plugins.detekt.plugin)
 }
 
 android {
@@ -47,6 +48,13 @@ android {
     room {
         schemaDirectory("$projectDir/schemas")
     }
+}
+
+detekt {
+    allRules = true
+    autoCorrect = true
+    buildUponDefaultConfig = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
 }
 
 ktlint {

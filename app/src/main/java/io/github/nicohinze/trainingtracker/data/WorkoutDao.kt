@@ -44,7 +44,8 @@ interface WorkoutDao {
     suspend fun getMaxOrderIndex(workoutId: Long): Int
 
     @Query(
-        "UPDATE workouts SET completionCount = completionCount + 1, totalDurationSeconds = totalDurationSeconds + :durationSeconds WHERE id = :workoutId",
+        "UPDATE workouts SET completionCount = completionCount + 1, " +
+            "totalDurationSeconds = totalDurationSeconds + :durationSeconds WHERE id = :workoutId",
     )
     suspend fun completeWorkout(workoutId: Long, durationSeconds: Long)
 
