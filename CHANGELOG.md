@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The total runtime across all workouts is displayed on the workout list screen
+- Active workouts can be paused and resumed during exercising and resting via a pause button in the top app bar
 
 ## [1.0.0] - 2026-06-05
 

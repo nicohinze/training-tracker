@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -77,9 +78,12 @@ fun ActiveWorkoutScreen(
         }
     }
 
+    val isActive = uiState.state == ActiveState.EXERCISING ||
+        uiState.state == ActiveState.RESTING ||
+        uiState.state == ActiveState.PAUSED
     var showQuitDialog by remember { mutableStateOf(false) }
     BackHandler {
-        if (uiState.state == ActiveState.EXERCISING || uiState.state == ActiveState.RESTING) {
+        if (isActive) {
             showQuitDialog = true
         } else {
             onBack()
@@ -87,28 +91,15 @@ fun ActiveWorkoutScreen(
     }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(uiState.workout?.name ?: "Workout") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (uiState.state == ActiveState.EXERCISING || uiState.state == ActiveState.RESTING) {
-                            showQuitDialog = true
-                        } else {
-                            onBack()
-                        }
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+            ActiveWorkoutTopBar(
+                title = uiState.workout?.name ?: "Workout",
+                state = uiState.state,
+                isActive = isActive,
+                elapsedSeconds = uiState.elapsedSeconds,
+                onBack = {
+                    if (isActive) showQuitDialog = true else onBack()
                 },
-                actions = {
-                    if (uiState.state == ActiveState.EXERCISING || uiState.state == ActiveState.RESTING) {
-                        Text(
-                            text = formatDuration(uiState.elapsedSeconds),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(end = 16.dp),
-                        )
-                    }
-                },
+                onPause = { viewModel.pauseWorkout() },
             )
         },
     ) { padding ->
@@ -149,6 +140,15 @@ fun ActiveWorkoutScreen(
                         )
                     }
 
+                    ActiveState.PAUSED -> {
+                        PausedContent(
+                            exercises = uiState.exercises,
+                            currentExerciseIndex = uiState.currentExerciseIndex,
+                            completedSets = uiState.completedSets,
+                            onResume = { viewModel.resumeWorkout() },
+                        )
+                    }
+
                     ActiveState.FINISHED -> {
                         FinishedContent(
                             elapsedSeconds = uiState.elapsedSeconds,
@@ -176,6 +176,40 @@ fun ActiveWorkoutScreen(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ActiveWorkoutTopBar(
+    title: String,
+    state: ActiveState,
+    isActive: Boolean,
+    elapsedSeconds: Long,
+    onBack: () -> Unit,
+    onPause: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(title) },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        },
+        actions = {
+            if (isActive) {
+                if (state == ActiveState.EXERCISING || state == ActiveState.RESTING) {
+                    IconButton(onClick = onPause) {
+                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+                    }
+                }
+                Text(
+                    text = formatDuration(elapsedSeconds),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(end = 16.dp),
+                )
+            }
+        },
+    )
 }
 
 @Composable
@@ -295,6 +329,33 @@ internal fun RestingContent(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
+        }
+    }
+}
+
+@Composable
+internal fun PausedContent(
+    exercises: List<Exercise>,
+    currentExerciseIndex: Int,
+    completedSets: Int,
+    onResume: () -> Unit,
+) {
+    ExerciseTable(exercises, currentExerciseIndex, completedSets) {
+        Text(
+            text = "Paused",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = onResume,
+            modifier = Modifier
+                .fillMaxWidth(0.6f)
+                .height(64.dp),
+        ) {
+            Icon(Icons.Default.PlayArrow, contentDescription = null)
+            Spacer(Modifier.size(8.dp))
+            Text("Resume", fontSize = 18.sp)
         }
     }
 }
@@ -519,60 +580,62 @@ private fun ExerciseTable(
     }
 }
 
+private val sampleExercises = listOf(
+    Exercise(
+        id = 1,
+        workoutId = 1,
+        name = "Bench Press",
+        sets = 3,
+        amount = 10,
+        intensity = "50 kg",
+        pauseSeconds = 90,
+        orderIndex = 0,
+    ),
+    Exercise(
+        id = 2,
+        workoutId = 1,
+        name = "Squats",
+        sets = 4,
+        amount = 8,
+        pauseSeconds = 120,
+        orderIndex = 1,
+    ),
+    Exercise(
+        id = 3,
+        workoutId = 1,
+        name = "Pull-ups",
+        sets = 3,
+        amount = 12,
+        pauseSeconds = 60,
+        orderIndex = 2,
+    ),
+    Exercise(
+        id = 4,
+        workoutId = 1,
+        name = "Plank",
+        sets = 2,
+        amount = 12,
+        type = ExerciseType.SECONDS,
+        intensity = "10 kg",
+        pauseSeconds = 60,
+        orderIndex = 3,
+    ),
+    Exercise(
+        id = 5,
+        workoutId = 1,
+        name = "Pull-ups",
+        sets = 1,
+        amount = 12,
+        pauseSeconds = 60,
+        orderIndex = 4,
+    ),
+)
+
 @Preview("ReadyContent", showBackground = true)
 @Composable
 private fun ReadyContentPreview() {
     ReadyContent(
-        exercises = listOf(
-            Exercise(
-                id = 1,
-                workoutId = 1,
-                name = "Bench Press",
-                sets = 3,
-                amount = 10,
-                intensity = "50 kg",
-                pauseSeconds = 90,
-                orderIndex = 0,
-            ),
-            Exercise(
-                id = 2,
-                workoutId = 1,
-                name = "Squats",
-                sets = 4,
-                amount = 8,
-                pauseSeconds = 120,
-                orderIndex = 1,
-            ),
-            Exercise(
-                id = 3,
-                workoutId = 1,
-                name = "Pull-ups",
-                sets = 3,
-                amount = 12,
-                pauseSeconds = 60,
-                orderIndex = 2,
-            ),
-            Exercise(
-                id = 4,
-                workoutId = 1,
-                name = "Plank",
-                sets = 2,
-                amount = 12,
-                type = ExerciseType.SECONDS,
-                intensity = "10 kg",
-                pauseSeconds = 60,
-                orderIndex = 3,
-            ),
-            Exercise(
-                id = 5,
-                workoutId = 1,
-                name = "Pull-ups",
-                sets = 1,
-                amount = 12,
-                pauseSeconds = 60,
-                orderIndex = 4,
-            ),
-        ),
+        exercises = sampleExercises,
         onStart = {},
     )
 }
@@ -580,43 +643,8 @@ private fun ReadyContentPreview() {
 @Preview("ExercisingContent", showBackground = true)
 @Composable
 private fun ExercisingContentPreview() {
-    val exercises = listOf(
-        Exercise(
-            id = 1,
-            workoutId = 1,
-            name = "Bench Press",
-            sets = 3,
-            amount = 10,
-            intensity = "50 kg",
-            pauseSeconds = 90,
-            orderIndex = 0,
-        ),
-        Exercise(
-            id = 2,
-            workoutId = 1,
-            name = "Plank",
-            sets = 4,
-            amount = 8,
-            type = ExerciseType.SECONDS,
-            pauseSeconds = 120,
-            orderIndex = 1,
-        ),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
-        Exercise(
-            id = 4,
-            workoutId = 1,
-            name = "Plank",
-            sets = 2,
-            amount = 12,
-            type = ExerciseType.SECONDS,
-            intensity = "10 kg",
-            pauseSeconds = 60,
-            orderIndex = 3,
-        ),
-        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
-    )
     ExercisingContent(
-        exercises = exercises,
+        exercises = sampleExercises,
         currentExerciseIndex = 3,
         completedSets = 1,
         onSetDone = {},
@@ -626,38 +654,23 @@ private fun ExercisingContentPreview() {
 @Preview("RestingContent", showBackground = true)
 @Composable
 private fun RestingContentPreview() {
-    val exercises = listOf(
-        Exercise(
-            id = 1,
-            workoutId = 1,
-            name = "Bench Press",
-            sets = 3,
-            amount = 10,
-            intensity = "50 kg",
-            pauseSeconds = 90,
-            orderIndex = 0,
-        ),
-        Exercise(id = 2, workoutId = 1, name = "Squats", sets = 4, amount = 8, pauseSeconds = 120, orderIndex = 1),
-        Exercise(id = 3, workoutId = 1, name = "Pull-ups", sets = 3, amount = 12, pauseSeconds = 60, orderIndex = 2),
-        Exercise(
-            id = 4,
-            workoutId = 1,
-            name = "Plank",
-            sets = 2,
-            amount = 12,
-            type = ExerciseType.SECONDS,
-            intensity = "10 kg",
-            pauseSeconds = 60,
-            orderIndex = 3,
-        ),
-        Exercise(id = 5, workoutId = 1, name = "Pull-ups", sets = 1, amount = 12, pauseSeconds = 60, orderIndex = 4),
-    )
     RestingContent(
-        exercises = exercises,
+        exercises = sampleExercises,
         currentExerciseIndex = 3,
         completedSets = 1,
-        7,
-        10,
+        remainingSeconds = 7,
+        totalPauseSeconds = 10,
+    )
+}
+
+@Preview("PausedContent", showBackground = true)
+@Composable
+private fun PausedContentPreview() {
+    PausedContent(
+        exercises = sampleExercises,
+        currentExerciseIndex = 3,
+        completedSets = 1,
+        onResume = {},
     )
 }
 

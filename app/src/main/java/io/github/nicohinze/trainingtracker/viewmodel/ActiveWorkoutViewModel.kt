@@ -18,6 +18,7 @@ enum class ActiveState {
     READY,
     EXERCISING,
     RESTING,
+    PAUSED,
     FINISHED,
 }
 
@@ -47,6 +48,12 @@ class ActiveWorkoutViewModel(
     private var timerJob: Job? = null
     private var elapsedJob: Job? = null
     private var workoutStartRealtime: Long = 0L
+    private var pausedAtRealtime: Long = 0L
+    private var totalPausedMs: Long = 0L
+    private var stateBeforePause: ActiveState = ActiveState.EXERCISING
+    private var restRemainingOnPause: Int = 0
+    private var restNextExerciseIndex: Int = 0
+    private var restNextSet: Int = 0
 
     init {
         viewModelScope.launch {
@@ -64,16 +71,55 @@ class ActiveWorkoutViewModel(
             return
         }
         workoutStartRealtime = SystemClock.elapsedRealtime()
+        totalPausedMs = 0L
         _uiState.value = _uiState.value.copy(
             state = ActiveState.EXERCISING,
             currentExerciseIndex = 0,
             completedSets = 0,
             elapsedSeconds = 0,
         )
+        startElapsedTimer()
+    }
+
+    fun pauseWorkout() {
+        val current = _uiState.value
+        if (current.state != ActiveState.EXERCISING && current.state != ActiveState.RESTING) {
+            return
+        }
+        stateBeforePause = current.state
+        pausedAtRealtime = SystemClock.elapsedRealtime()
+        if (current.state == ActiveState.RESTING) {
+            restRemainingOnPause = current.remainingSeconds
+            timerJob?.cancel()
+        }
+        elapsedJob?.cancel()
+        _uiState.value = current.copy(state = ActiveState.PAUSED)
+    }
+
+    fun resumeWorkout() {
+        if (_uiState.value.state != ActiveState.PAUSED) {
+            return
+        }
+        val pauseDuration = SystemClock.elapsedRealtime() - pausedAtRealtime
+        totalPausedMs += pauseDuration
+        startElapsedTimer()
+        if (stateBeforePause == ActiveState.RESTING) {
+            _uiState.value = _uiState.value.copy(
+                state = ActiveState.RESTING,
+                remainingSeconds = restRemainingOnPause,
+            )
+            startRestTimer(restRemainingOnPause)
+        } else {
+            _uiState.value = _uiState.value.copy(state = ActiveState.EXERCISING)
+        }
+    }
+
+    private fun startElapsedTimer() {
+        elapsedJob?.cancel()
         elapsedJob = viewModelScope.launch {
             while (true) {
                 delay(1000L)
-                val elapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime) / 1000
+                val elapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime - totalPausedMs) / 1000
                 _uiState.value = _uiState.value.copy(elapsedSeconds = elapsed)
             }
         }
@@ -129,26 +175,32 @@ class ActiveWorkoutViewModel(
             )
             return
         }
+        restNextExerciseIndex = nextExerciseIndex
+        restNextSet = nextSet
         _uiState.value = _uiState.value.copy(
             state = ActiveState.RESTING,
             currentExerciseIndex = restExerciseIndex,
             completedSets = restSet,
             remainingSeconds = pauseSeconds,
         )
+        startRestTimer(pauseSeconds)
+    }
+
+    private fun startRestTimer(totalSeconds: Int) {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
             val restStartRealtime = SystemClock.elapsedRealtime()
             while (true) {
                 delay(1000L)
                 val elapsedMs = SystemClock.elapsedRealtime() - restStartRealtime
-                val remaining = pauseSeconds - (elapsedMs / 1000).toInt()
+                val remaining = totalSeconds - (elapsedMs / 1000).toInt()
                 if (remaining > 0) {
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
                     _uiState.value = _uiState.value.copy(
                         state = ActiveState.EXERCISING,
-                        currentExerciseIndex = nextExerciseIndex,
-                        completedSets = nextSet,
+                        currentExerciseIndex = restNextExerciseIndex,
+                        completedSets = restNextSet,
                         remainingSeconds = 0,
                     )
                     break

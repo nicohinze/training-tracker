@@ -121,4 +121,67 @@ class ActiveWorkoutUiStateTest {
         assertTrue(state.isLastSetOfExercise)
         assertEquals(ActiveState.FINISHED, state.state)
     }
+
+    @Test
+    fun pausedState_preservesExerciseProgress() {
+        val state = ActiveWorkoutUiState(
+            exercises = exercises,
+            currentExerciseIndex = 1,
+            completedSets = 2,
+            state = ActiveState.PAUSED,
+        )
+        assertEquals(ActiveState.PAUSED, state.state)
+        assertEquals(1, state.currentExerciseIndex)
+        assertEquals(2, state.completedSets)
+        assertEquals(exercises[1], state.currentExercise)
+    }
+
+    @Test
+    fun pausedState_preservesRemainingSeconds() {
+        val state = ActiveWorkoutUiState(
+            exercises = exercises,
+            currentExerciseIndex = 0,
+            completedSets = 1,
+            state = ActiveState.PAUSED,
+            remainingSeconds = 45,
+        )
+        assertEquals(45, state.remainingSeconds)
+    }
+
+    @Test
+    fun pausedState_computedPropertiesStillWork() {
+        val state = ActiveWorkoutUiState(
+            exercises = exercises,
+            currentExerciseIndex = 0,
+            completedSets = 3,
+            state = ActiveState.PAUSED,
+        )
+        assertTrue(state.isLastSetOfExercise)
+        assertFalse(state.isLastExercise)
+        assertEquals(3, state.totalSets)
+    }
+
+    @Test
+    fun pausedState_atLastExercise() {
+        val state = ActiveWorkoutUiState(
+            exercises = exercises,
+            currentExerciseIndex = 2,
+            completedSets = 1,
+            state = ActiveState.PAUSED,
+        )
+        assertTrue(state.isLastExercise)
+        assertFalse(state.isLastSetOfExercise)
+    }
+
+    @Test
+    fun pausedState_elapsedSecondsPreserved() {
+        val state = ActiveWorkoutUiState(
+            exercises = exercises,
+            currentExerciseIndex = 1,
+            completedSets = 2,
+            state = ActiveState.PAUSED,
+            elapsedSeconds = 300,
+        )
+        assertEquals(300L, state.elapsedSeconds)
+    }
 }
