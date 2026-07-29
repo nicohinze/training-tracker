@@ -109,6 +109,22 @@ fun RestingContentScreenshot() {
 @PreviewTest
 @PreviewLightDark
 @Composable
+fun PausedContentScreenshot() {
+    TrainingTrackerTheme(dynamicColor = false) {
+        Surface {
+            PausedContent(
+                exercises = sampleExercises,
+                currentExerciseIndex = 3,
+                completedSets = 1,
+                onResume = {},
+            )
+        }
+    }
+}
+
+@PreviewTest
+@PreviewLightDark
+@Composable
 fun FinishedContentScreenshot() {
     TrainingTrackerTheme(dynamicColor = false) {
         Surface {
