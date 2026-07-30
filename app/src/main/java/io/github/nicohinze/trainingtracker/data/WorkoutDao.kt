@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+@Suppress("TooManyFunctions")
 @Dao
 interface WorkoutDao {
     @Query("SELECT * FROM workouts ORDER BY name ASC")
@@ -54,6 +55,16 @@ interface WorkoutDao {
         val workout = getWorkout(workoutId)
         val exercises = getExerciseListForWorkout(workoutId)
         return Pair(workout, exercises)
+    }
+
+    @Query("SELECT * FROM workouts ORDER BY name ASC")
+    suspend fun getAllWorkoutList(): List<Workout>
+
+    @Transaction
+    suspend fun getAllWorkoutsWithExercises(): List<Pair<Workout, List<Exercise>>> {
+        return getAllWorkoutList().map { workout ->
+            Pair(workout, getExerciseListForWorkout(workout.id))
+        }
     }
 
     @Transaction

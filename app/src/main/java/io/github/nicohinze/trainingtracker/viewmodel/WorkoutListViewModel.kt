@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Workout
+import io.github.nicohinze.trainingtracker.data.WorkoutJsonConverter
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -37,5 +38,21 @@ class WorkoutListViewModel(
         viewModelScope.launch {
             dao.updateWorkout(workout.copy(name = newName))
         }
+    }
+
+    suspend fun importJson(json: String): Int {
+        val workoutsWithExercises = WorkoutJsonConverter.fromJson(json)
+        for ((workout, exercises) in workoutsWithExercises) {
+            val workoutId = dao.insertWorkout(workout)
+            for (exercise in exercises) {
+                dao.insertExercise(exercise.copy(workoutId = workoutId))
+            }
+        }
+        return workoutsWithExercises.size
+    }
+
+    suspend fun exportJson(): String {
+        val workoutsWithExercises = dao.getAllWorkoutsWithExercises()
+        return WorkoutJsonConverter.toJson(workoutsWithExercises)
     }
 }

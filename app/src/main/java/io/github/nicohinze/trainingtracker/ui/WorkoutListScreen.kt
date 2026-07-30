@@ -1,5 +1,10 @@
 package io.github.nicohinze.trainingtracker.ui
 
+import android.content.Context
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +19,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -33,9 +41,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun WorkoutListScreen(
@@ -51,6 +62,35 @@ fun WorkoutListScreen(
     viewModel: WorkoutListViewModel = viewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        scope.launch {
+            try {
+                val json = readJsonFromUri(context, uri)
+                val count = viewModel.importJson(json)
+                Toast.makeText(context, "Imported $count workout(s)", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(context, "Import failed: invalid file", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        scope.launch {
+            val json = viewModel.exportJson()
+            writeJsonToUri(context, uri, json)
+            Toast.makeText(context, "Workouts exported", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     WorkoutListContent(
         workouts = workouts,
         onEditWorkout = onEditWorkout,
@@ -58,7 +98,21 @@ fun WorkoutListScreen(
         onAddWorkout = { viewModel.addWorkout(it) },
         onDeleteWorkout = { viewModel.deleteWorkout(it) },
         onRenameWorkout = { workout, newName -> viewModel.renameWorkout(workout, newName) },
+        onImport = { importLauncher.launch(arrayOf("application/json")) },
+        onExport = { exportLauncher.launch("workouts.json") },
     )
+}
+
+private fun readJsonFromUri(context: Context, uri: Uri): String {
+    return context.contentResolver.openInputStream(uri)!!.use { inputStream ->
+        inputStream.bufferedReader().readText()
+    }
+}
+
+private fun writeJsonToUri(context: Context, uri: Uri, json: String) {
+    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+        outputStream.write(json.toByteArray())
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,8 +124,11 @@ internal fun WorkoutListContent(
     onAddWorkout: (String) -> Unit,
     onDeleteWorkout: (Workout) -> Unit,
     onRenameWorkout: (Workout, String) -> Unit,
+    onImport: () -> Unit = {},
+    onExport: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var showImportExportMenu by remember { mutableStateOf(false) }
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
     var workoutToRename by remember { mutableStateOf<Workout?>(null) }
 
@@ -79,7 +136,33 @@ internal fun WorkoutListContent(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("My Workouts") })
+            TopAppBar(
+                title = { Text("My Workouts") },
+                actions = {
+                    IconButton(onClick = { showImportExportMenu = true }) {
+                        Icon(Icons.Default.ImportExport, contentDescription = "Import/Export")
+                    }
+                    DropdownMenu(
+                        expanded = showImportExportMenu,
+                        onDismissRequest = { showImportExportMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Import workouts") },
+                            onClick = {
+                                showImportExportMenu = false
+                                onImport()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export workouts") },
+                            onClick = {
+                                showImportExportMenu = false
+                                onExport()
+                            },
+                        )
+                    }
+                },
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
