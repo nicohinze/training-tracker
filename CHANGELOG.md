@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The total runtime across all workouts is displayed on the workout list screen
 - Active workouts can be paused and resumed during exercising and resting via a pause button in the top app bar
 - Workout data can be exported as JSON and imported from a JSON file via the Import/Export menu in the top app bar
+- A "Reset all stats" option in the overflow menu resets completion counts and total time for all workouts
 
 ## [1.0.0] - 2026-06-05
 

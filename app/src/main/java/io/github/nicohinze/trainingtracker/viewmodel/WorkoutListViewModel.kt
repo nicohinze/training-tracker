@@ -31,6 +31,12 @@ class WorkoutListViewModel(
         }
     }
 
+    fun resetAllStats() {
+        viewModelScope.launch {
+            dao.resetAllStats()
+        }
+    }
+
     fun renameWorkout(
         workout: Workout,
         newName: String,
