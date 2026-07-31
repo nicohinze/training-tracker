@@ -50,6 +50,9 @@ interface WorkoutDao {
     )
     suspend fun completeWorkout(workoutId: Long, durationSeconds: Long)
 
+    @Query("UPDATE workouts SET completionCount = 0, totalDurationSeconds = 0")
+    suspend fun resetAllStats()
+
     @Transaction
     suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {
         val workout = getWorkout(workoutId)

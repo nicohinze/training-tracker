@@ -281,6 +281,31 @@ class WorkoutDaoTest {
     }
 
     @Test
+    fun resetAllStats_resetsCountAndDurationForAllWorkouts() = runTest {
+        val id1 = dao.insertWorkout(Workout(name = "Push"))
+        val id2 = dao.insertWorkout(Workout(name = "Pull"))
+        dao.completeWorkout(id1, 300)
+        dao.completeWorkout(id1, 200)
+        dao.completeWorkout(id2, 600)
+
+        dao.resetAllStats()
+
+        val w1 = dao.getWorkout(id1)!!
+        val w2 = dao.getWorkout(id2)!!
+        assertEquals(0, w1.completionCount)
+        assertEquals(0L, w1.totalDurationSeconds)
+        assertEquals(0, w2.completionCount)
+        assertEquals(0L, w2.totalDurationSeconds)
+    }
+
+    @Test
+    fun resetAllStats_noOpWhenNoWorkouts() = runTest {
+        dao.resetAllStats()
+        val workouts = dao.getAllWorkouts().first()
+        assertTrue(workouts.isEmpty())
+    }
+
+    @Test
     fun exercises_areIsolatedPerWorkout() = runTest {
         val id1 = dao.insertWorkout(Workout(name = "Workout 1"))
         val id2 = dao.insertWorkout(Workout(name = "Workout 2"))

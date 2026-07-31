@@ -100,6 +100,7 @@ fun WorkoutListScreen(
         onRenameWorkout = { workout, newName -> viewModel.renameWorkout(workout, newName) },
         onImport = { importLauncher.launch(arrayOf("application/json")) },
         onExport = { exportLauncher.launch("workouts.json") },
+        onResetAllStats = { viewModel.resetAllStats() },
     )
 }
 
@@ -126,9 +127,11 @@ internal fun WorkoutListContent(
     onRenameWorkout: (Workout, String) -> Unit,
     onImport: () -> Unit = {},
     onExport: () -> Unit = {},
+    onResetAllStats: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportExportMenu by remember { mutableStateOf(false) }
+    var showResetStatsDialog by remember { mutableStateOf(false) }
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
     var workoutToRename by remember { mutableStateOf<Workout?>(null) }
 
@@ -158,6 +161,13 @@ internal fun WorkoutListContent(
                             onClick = {
                                 showImportExportMenu = false
                                 onExport()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Reset all stats") },
+                            onClick = {
+                                showImportExportMenu = false
+                                showResetStatsDialog = true
                             },
                         )
                     }
@@ -250,6 +260,26 @@ internal fun WorkoutListContent(
                 onConfirm = { newName ->
                     onRenameWorkout(workout, newName)
                     workoutToRename = null
+                },
+            )
+        }
+        if (showResetStatsDialog) {
+            AlertDialog(
+                onDismissRequest = { showResetStatsDialog = false },
+                title = { Text("Reset All Stats") },
+                text = { Text("Reset completion counts and total time for all workouts? This cannot be undone.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onResetAllStats()
+                        showResetStatsDialog = false
+                    }) {
+                        Text("Reset")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetStatsDialog = false }) {
+                        Text("Cancel")
+                    }
                 },
             )
         }
