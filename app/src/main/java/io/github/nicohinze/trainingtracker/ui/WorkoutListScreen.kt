@@ -5,18 +5,27 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ImportExport
@@ -39,17 +48,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.github.nicohinze.trainingtracker.data.DEFAULT_WORKOUT_COLOR
+import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
@@ -59,6 +73,7 @@ import kotlinx.coroutines.launch
 fun WorkoutListScreen(
     onEditWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
+    onActivity: () -> Unit = {},
     viewModel: WorkoutListViewModel = viewModel(),
 ) {
     val workouts by viewModel.workouts.collectAsState()
@@ -95,12 +110,13 @@ fun WorkoutListScreen(
         workouts = workouts,
         onEditWorkout = onEditWorkout,
         onStartWorkout = onStartWorkout,
-        onAddWorkout = { viewModel.addWorkout(it) },
+        onAddWorkout = { name, color -> viewModel.addWorkout(name, color) },
         onDeleteWorkout = { viewModel.deleteWorkout(it) },
-        onRenameWorkout = { workout, newName -> viewModel.renameWorkout(workout, newName) },
+        onUpdateWorkout = { workout, newName, newColor -> viewModel.updateWorkout(workout, newName, newColor) },
         onImport = { importLauncher.launch(arrayOf("application/json")) },
         onExport = { exportLauncher.launch("workouts.json") },
         onResetAllStats = { viewModel.resetAllStats() },
+        onActivity = onActivity,
     )
 }
 
@@ -122,18 +138,19 @@ internal fun WorkoutListContent(
     workouts: List<Workout>,
     onEditWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
-    onAddWorkout: (String) -> Unit,
+    onAddWorkout: (String, Int) -> Unit,
     onDeleteWorkout: (Workout) -> Unit,
-    onRenameWorkout: (Workout, String) -> Unit,
+    onUpdateWorkout: (Workout, String, Int) -> Unit,
     onImport: () -> Unit = {},
     onExport: () -> Unit = {},
     onResetAllStats: () -> Unit = {},
+    onActivity: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportExportMenu by remember { mutableStateOf(false) }
     var showResetStatsDialog by remember { mutableStateOf(false) }
     var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
-    var workoutToRename by remember { mutableStateOf<Workout?>(null) }
+    var workoutToEdit by remember { mutableStateOf<Workout?>(null) }
 
     val totalRuntime = workouts.sumOf { it.totalDurationSeconds }
 
@@ -142,6 +159,9 @@ internal fun WorkoutListContent(
             TopAppBar(
                 title = { Text("My Workouts") },
                 actions = {
+                    IconButton(onClick = onActivity) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Activity graph")
+                    }
                     IconButton(onClick = { showImportExportMenu = true }) {
                         Icon(Icons.Default.ImportExport, contentDescription = "Import/Export")
                     }
@@ -218,18 +238,37 @@ internal fun WorkoutListContent(
                             onEdit = { onEditWorkout(workout.id) },
                             onStart = { onStartWorkout(workout.id) },
                             onDelete = { workoutToDelete = workout },
-                            onRename = { workoutToRename = workout },
+                            onRename = { workoutToEdit = workout },
                         )
                     }
                 }
             }
         }
         if (showAddDialog) {
-            AddWorkoutDialog(
+            WorkoutDialog(
+                title = "New Workout",
+                initialName = "",
+                initialColor = DEFAULT_WORKOUT_COLOR,
+                confirmLabel = "Create",
+                isConfirmEnabled = { _, _ -> true },
                 onDismiss = { showAddDialog = false },
-                onConfirm = { name ->
-                    onAddWorkout(name)
+                onConfirm = { name, color ->
+                    onAddWorkout(name, color)
                     showAddDialog = false
+                },
+            )
+        }
+        workoutToEdit?.let { workout ->
+            WorkoutDialog(
+                title = "Edit Workout",
+                initialName = workout.name,
+                initialColor = workout.color,
+                confirmLabel = "Save",
+                isConfirmEnabled = { name, color -> name != workout.name || color != workout.color },
+                onDismiss = { workoutToEdit = null },
+                onConfirm = { newName, newColor ->
+                    onUpdateWorkout(workout, newName, newColor)
+                    workoutToEdit = null
                 },
             )
         }
@@ -250,16 +289,6 @@ internal fun WorkoutListContent(
                     TextButton(onClick = { workoutToDelete = null }) {
                         Text("Cancel")
                     }
-                },
-            )
-        }
-        workoutToRename?.let { workout ->
-            RenameWorkoutDialog(
-                currentName = workout.name,
-                onDismiss = { workoutToRename = null },
-                onConfirm = { newName ->
-                    onRenameWorkout(workout, newName)
-                    workoutToRename = null
                 },
             )
         }
@@ -307,6 +336,13 @@ internal fun WorkoutCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .clip(CircleShape)
+                    .background(Color(workout.color)),
+            )
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = workout.name,
@@ -332,7 +368,7 @@ internal fun WorkoutCard(
             IconButton(onClick = onRename) {
                 Icon(
                     Icons.Default.Edit,
-                    contentDescription = "Rename workout",
+                    contentDescription = "Edit workout",
                 )
             }
             IconButton(onClick = onDelete) {
@@ -347,31 +383,35 @@ internal fun WorkoutCard(
 }
 
 @Composable
-private fun AddWorkoutDialog(
+private fun WorkoutDialog(
+    title: String,
+    initialName: String,
+    initialColor: Int,
+    confirmLabel: String,
+    isConfirmEnabled: (name: String, color: Int) -> Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Int) -> Unit,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
+    var color by remember { mutableIntStateOf(initialColor) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Workout") },
+        title = { Text(title) },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Workout name") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.fillMaxWidth(),
+            WorkoutDialogBody(
+                name = name,
+                onNameChange = { name = it },
+                color = color,
+                onColorChange = { color = it },
             )
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(name.trim()) },
-                enabled = name.isNotBlank(),
+                onClick = { onConfirm(name.trim(), color) },
+                enabled = name.isNotBlank() && isConfirmEnabled(name.trim(), color),
             ) {
-                Text("Create")
+                Text(confirmLabel)
             }
         },
         dismissButton = {
@@ -383,40 +423,67 @@ private fun AddWorkoutDialog(
 }
 
 @Composable
-private fun RenameWorkoutDialog(
-    currentName: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
+private fun WorkoutDialogBody(
+    name: String,
+    onNameChange: (String) -> Unit,
+    color: Int,
+    onColorChange: (Int) -> Unit,
 ) {
-    var name by remember { mutableStateOf(currentName) }
+    Column {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Workout name") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Color",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        ColorPickerRow(
+            selectedColor = color,
+            onColorSelected = onColorChange,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Rename Workout") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Workout name") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(name.trim()) },
-                enabled = name.isNotBlank() && name.trim() != currentName,
-            ) {
-                Text("Rename")
+@Composable
+private fun ColorPickerRow(
+    selectedColor: Int,
+    onColorSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        WORKOUT_COLORS.chunked(5).forEach { rowColors ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                rowColors.forEach { color ->
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(color))
+                            .then(
+                                if (color == selectedColor) {
+                                    Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                } else {
+                                    Modifier.border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                        CircleShape,
+                                    )
+                                },
+                            ).clickable { onColorSelected(color) },
+                    )
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
+        }
+    }
 }
 
 @Preview("WorkoutList - Populated", showBackground = true)
@@ -424,16 +491,40 @@ private fun RenameWorkoutDialog(
 private fun WorkoutListContentPreview() {
     WorkoutListContent(
         workouts = listOf(
-            Workout(id = 1, name = "Push Day", completionCount = 5, totalDurationSeconds = 5 * 60 * 60 + 576),
-            Workout(id = 2, name = "Pull Day", completionCount = 3, totalDurationSeconds = 3 * 60 * 60 + 123),
-            Workout(id = 3, name = "Leg Day", completionCount = 0, totalDurationSeconds = 0),
-            Workout(id = 4, name = "All Day", completionCount = 999, totalDurationSeconds = 999 * 60 * 60 + 9999),
+            Workout(
+                id = 1,
+                name = "Push Day",
+                completionCount = 5,
+                totalDurationSeconds = 5 * 60 * 60 + 576,
+                color = WORKOUT_COLORS[0],
+            ),
+            Workout(
+                id = 2,
+                name = "Pull Day",
+                completionCount = 3,
+                totalDurationSeconds = 3 * 60 * 60 + 123,
+                color = WORKOUT_COLORS[1],
+            ),
+            Workout(
+                id = 3,
+                name = "Leg Day",
+                completionCount = 0,
+                totalDurationSeconds = 0,
+                color = WORKOUT_COLORS[2],
+            ),
+            Workout(
+                id = 4,
+                name = "All Day",
+                completionCount = 999,
+                totalDurationSeconds = 999 * 60 * 60 + 9999,
+                color = WORKOUT_COLORS[3],
+            ),
         ),
         onEditWorkout = {},
         onStartWorkout = {},
-        onAddWorkout = {},
+        onAddWorkout = { _, _ -> },
         onDeleteWorkout = {},
-        onRenameWorkout = { _, _ -> },
+        onUpdateWorkout = { _, _, _ -> },
     )
 }
 
@@ -444,9 +535,9 @@ private fun WorkoutListContentEmptyPreview() {
         workouts = emptyList(),
         onEditWorkout = {},
         onStartWorkout = {},
-        onAddWorkout = {},
+        onAddWorkout = { _, _ -> },
         onDeleteWorkout = {},
-        onRenameWorkout = { _, _ -> },
+        onUpdateWorkout = { _, _, _ -> },
     )
 }
 
@@ -459,5 +550,37 @@ private fun WorkoutCardPreview() {
         onStart = {},
         onDelete = {},
         onRename = {},
+    )
+}
+
+@Preview("WorkoutDialog - New", showBackground = true, widthDp = 320)
+@Composable
+private fun WorkoutDialogNewPreview() {
+    WorkoutDialogBody(
+        name = "",
+        onNameChange = {},
+        color = DEFAULT_WORKOUT_COLOR,
+        onColorChange = {},
+    )
+}
+
+@Preview("WorkoutDialog - Edit", showBackground = true, widthDp = 320)
+@Composable
+private fun WorkoutDialogEditPreview() {
+    WorkoutDialogBody(
+        name = "Push Day",
+        onNameChange = {},
+        color = WORKOUT_COLORS[2],
+        onColorChange = {},
+    )
+}
+
+@Preview("ColorPickerRow", showBackground = true, widthDp = 320)
+@Composable
+private fun ColorPickerRowPreview() {
+    ColorPickerRow(
+        selectedColor = WORKOUT_COLORS[2],
+        onColorSelected = {},
+        modifier = Modifier.padding(16.dp),
     )
 }

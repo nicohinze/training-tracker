@@ -24,6 +24,7 @@ object WorkoutJsonConverter {
                 name = workoutObj.getString("name"),
                 completionCount = workoutObj.optInt("completionCount", 0),
                 totalDurationSeconds = workoutObj.optLong("totalDurationSeconds", 0),
+                color = workoutObj.optInt("color", DEFAULT_WORKOUT_COLOR),
             )
             val exercisesArray = workoutObj.optJSONArray("exercises") ?: JSONArray()
             val exercises = mutableListOf<Exercise>()
@@ -52,6 +53,7 @@ object WorkoutJsonConverter {
         obj.put("name", workout.name)
         obj.put("completionCount", workout.completionCount)
         obj.put("totalDurationSeconds", workout.totalDurationSeconds)
+        obj.put("color", workout.color)
         val exercisesArray = JSONArray()
         for (exercise in exercises) {
             exercisesArray.put(exerciseToJson(exercise))

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Workout::class, Exercise::class], version = 5)
+@Database(entities = [Workout::class, Exercise::class, WorkoutCompletion::class], version = 6)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
 
@@ -40,14 +40,43 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // DEFAULT -14575885 = 0xFF2196F3 (Material Blue 500)
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE workouts ADD COLUMN color INTEGER NOT NULL DEFAULT -14575885")
+                db.execSQL(
+                    """
+                    CREATE TABLE workout_completions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        workoutId INTEGER NOT NULL,
+                        completedAt INTEGER NOT NULL,
+                        durationSeconds INTEGER NOT NULL,
+                        FOREIGN KEY (workoutId) REFERENCES workouts(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE INDEX index_workout_completions_workoutId ON workout_completions(workoutId)",
+                )
+                db.execSQL(
+                    "CREATE INDEX index_workout_completions_completedAt ON workout_completions(completedAt)",
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase = instance ?: synchronized(this) {
             val inst = Room
                 .databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
                     "workout_database",
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
-                .build()
+                ).addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6,
+                ).build()
             instance = inst
             inst
         }
