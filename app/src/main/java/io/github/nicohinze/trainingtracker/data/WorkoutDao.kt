@@ -53,6 +53,12 @@ interface WorkoutDao {
     @Query("UPDATE workouts SET completionCount = 0, totalDurationSeconds = 0")
     suspend fun resetAllStats()
 
+    @Insert
+    suspend fun insertCompletion(completion: WorkoutCompletion)
+
+    @Query("SELECT * FROM workout_completions WHERE completedAt >= :since ORDER BY completedAt ASC")
+    fun getCompletionsSince(since: Long): Flow<List<WorkoutCompletion>>
+
     @Transaction
     suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {
         val workout = getWorkout(workoutId)

@@ -19,9 +19,9 @@ class WorkoutListViewModel(
         .getAllWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addWorkout(name: String) {
+    fun addWorkout(name: String, color: Int) {
         viewModelScope.launch {
-            dao.insertWorkout(Workout(name = name))
+            dao.insertWorkout(Workout(name = name, color = color))
         }
     }
 
@@ -37,12 +37,13 @@ class WorkoutListViewModel(
         }
     }
 
-    fun renameWorkout(
+    fun updateWorkout(
         workout: Workout,
         newName: String,
+        color: Int,
     ) {
         viewModelScope.launch {
-            dao.updateWorkout(workout.copy(name = newName))
+            dao.updateWorkout(workout.copy(name = newName, color = color))
         }
     }
 

@@ -20,9 +20,9 @@ fun WorkoutListPopulatedScreenshotZeroRuntime() {
             ),
             onEditWorkout = {},
             onStartWorkout = {},
-            onAddWorkout = {},
+            onAddWorkout = { _, _ -> },
             onDeleteWorkout = {},
-            onRenameWorkout = { _, _ -> },
+            onUpdateWorkout = { _, _, _ -> },
         )
     }
 }
@@ -40,9 +40,9 @@ fun WorkoutListPopulatedScreenshotNonZeroRuntime() {
             ),
             onEditWorkout = {},
             onStartWorkout = {},
-            onAddWorkout = {},
+            onAddWorkout = { _, _ -> },
             onDeleteWorkout = {},
-            onRenameWorkout = { _, _ -> },
+            onUpdateWorkout = { _, _, _ -> },
         )
     }
 }
@@ -56,9 +56,9 @@ fun WorkoutListEmptyScreenshot() {
             workouts = emptyList(),
             onEditWorkout = {},
             onStartWorkout = {},
-            onAddWorkout = {},
+            onAddWorkout = { _, _ -> },
             onDeleteWorkout = {},
-            onRenameWorkout = { _, _ -> },
+            onUpdateWorkout = { _, _, _ -> },
         )
     }
 }
