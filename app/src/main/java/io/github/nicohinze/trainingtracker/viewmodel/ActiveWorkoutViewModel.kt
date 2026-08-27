@@ -2,6 +2,8 @@ package io.github.nicohinze.trainingtracker.viewmodel
 
 import android.app.Application
 import android.os.SystemClock
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -36,6 +38,9 @@ data class ActiveWorkoutUiState(
     val isLastSetOfExercise: Boolean get() = completedSets >= totalSets
     val isLastExercise: Boolean get() = currentExerciseIndex >= exercises.size - 1
 }
+
+private const val VIBRATION_COUNTDOWN_THRESHOLD = 3
+private const val VIBRATION_DURATION_MS = 100L
 
 class ActiveWorkoutViewModel(
     application: Application,
@@ -195,6 +200,9 @@ class ActiveWorkoutViewModel(
                 val elapsedMs = SystemClock.elapsedRealtime() - restStartRealtime
                 val remaining = totalSeconds - (elapsedMs / 1000).toInt()
                 if (remaining > 0) {
+                    if (remaining in 1..VIBRATION_COUNTDOWN_THRESHOLD) {
+                        vibrate()
+                    }
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
                     _uiState.value = _uiState.value.copy(
@@ -207,5 +215,10 @@ class ActiveWorkoutViewModel(
                 }
             }
         }
+    }
+
+    private fun vibrate() {
+        val vibrator = getApplication<Application>().getSystemService(Vibrator::class.java) ?: return
+        vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 }
