@@ -8,6 +8,12 @@ import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutCompletion
 import io.github.nicohinze.trainingtracker.ui.theme.TrainingTrackerTheme
 import io.github.nicohinze.trainingtracker.viewmodel.ActivityGraphUiState
+import java.time.LocalDate
+import java.time.ZoneOffset
+
+// Fixed Sunday so the last column is always fully visible in the screenshot.
+private val SCREENSHOT_TODAY = LocalDate.of(2026, 8, 30)
+private val SCREENSHOT_NOW_MS = SCREENSHOT_TODAY.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
 private val sampleWorkouts = listOf(
     Workout(id = 1, name = "Push Day", color = WORKOUT_COLORS[0]),
@@ -16,7 +22,6 @@ private val sampleWorkouts = listOf(
 )
 
 private fun sampleCompletions(): List<WorkoutCompletion> {
-    val now = System.currentTimeMillis()
     val day = 24L * 60 * 60 * 1000
     return buildList {
         for (weeksAgo in 0..8) {
@@ -25,7 +30,7 @@ private fun sampleCompletions(): List<WorkoutCompletion> {
                 WorkoutCompletion(
                     id = weeksAgo.toLong(),
                     workoutId = workoutId,
-                    completedAt = now - 7 * weeksAgo * day - (weeksAgo % 3) * day,
+                    completedAt = SCREENSHOT_NOW_MS - 7 * weeksAgo * day - (weeksAgo % 3) * day,
                     durationSeconds = 3600,
                 ),
             )
@@ -44,6 +49,7 @@ fun ActivityGraphPopulatedScreenshot() {
                 workouts = sampleWorkouts,
             ),
             onBack = {},
+            today = SCREENSHOT_TODAY,
         )
     }
 }
@@ -56,6 +62,7 @@ fun ActivityGraphEmptyScreenshot() {
         ActivityGraphContent(
             uiState = ActivityGraphUiState(),
             onBack = {},
+            today = SCREENSHOT_TODAY,
         )
     }
 }
