@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A vibration effect was added that is active in the last 3 seconds when resting
 - Each workout can be assigned a colour, chosen from a predefined palette
 - An activity graph screen shows completed workouts over time, colour-coded per workout
+- An about screen was added
 
 ## [1.1.0] - 2026-08-05
 

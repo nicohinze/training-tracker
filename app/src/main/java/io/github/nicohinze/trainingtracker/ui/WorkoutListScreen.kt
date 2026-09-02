@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ImportExport
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -73,6 +74,7 @@ import kotlinx.coroutines.launch
 fun WorkoutListScreen(
     onEditWorkout: (Long) -> Unit,
     onStartWorkout: (Long) -> Unit,
+    onAbout: () -> Unit = {},
     onActivity: () -> Unit = {},
     viewModel: WorkoutListViewModel = viewModel(),
 ) {
@@ -116,6 +118,7 @@ fun WorkoutListScreen(
         onImport = { importLauncher.launch(arrayOf("application/json")) },
         onExport = { exportLauncher.launch("workouts.json") },
         onResetAllStats = { viewModel.resetAllStats() },
+        onAbout = onAbout,
         onActivity = onActivity,
     )
 }
@@ -144,6 +147,7 @@ internal fun WorkoutListContent(
     onImport: () -> Unit = {},
     onExport: () -> Unit = {},
     onResetAllStats: () -> Unit = {},
+    onAbout: () -> Unit = {},
     onActivity: () -> Unit = {},
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -159,6 +163,9 @@ internal fun WorkoutListContent(
             TopAppBar(
                 title = { Text("My Workouts") },
                 actions = {
+                    IconButton(onClick = onAbout) {
+                        Icon(Icons.Default.Info, contentDescription = "About")
+                    }
                     IconButton(onClick = onActivity) {
                         Icon(Icons.Default.DateRange, contentDescription = "Activity graph")
                     }

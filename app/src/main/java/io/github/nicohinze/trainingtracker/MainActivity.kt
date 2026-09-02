@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import io.github.nicohinze.trainingtracker.ui.AboutScreen
 import io.github.nicohinze.trainingtracker.ui.ActiveWorkoutScreen
 import io.github.nicohinze.trainingtracker.ui.ActivityGraphScreen
 import io.github.nicohinze.trainingtracker.ui.WorkoutEditScreen
@@ -40,9 +41,17 @@ class MainActivity : ComponentActivity() {
                                 onStartWorkout = { id ->
                                     navController.navigate("active/$id")
                                 },
+                                onAbout = {
+                                    navController.navigate("about")
+                                },
                                 onActivity = {
                                     navController.navigate("activity_graph")
                                 },
+                            )
+                        }
+                        composable("about") {
+                            AboutScreen(
+                                onBack = { navController.popBackStack() },
                             )
                         }
                         composable("activity_graph") {
