@@ -25,7 +25,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -68,8 +67,8 @@ fun ActivityGraphScreen(
 internal fun ActivityGraphContent(
     uiState: ActivityGraphUiState,
     onBack: () -> Unit,
+    today: LocalDate = LocalDate.now(),
 ) {
-    val today = LocalDate.now()
     val startOfCurrentWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val startDate = startOfCurrentWeek.minusWeeks(51)
     val workoutMap = uiState.workouts.associateBy { it.id }
@@ -151,13 +150,7 @@ private fun ActivityCalendar(
     today: LocalDate,
     dayColorMap: Map<LocalDate, Int>,
 ) {
-    val scrollState = rememberScrollState()
-    LaunchedEffect(scrollState.maxValue) {
-        if (scrollState.maxValue > 0) {
-            scrollState.scrollTo(scrollState.maxValue)
-        }
-    }
-    Column(modifier = Modifier.horizontalScroll(scrollState)) {
+    Column(modifier = Modifier.horizontalScroll(rememberScrollState(Int.MAX_VALUE))) {
         Row {
             for (weekIndex in 0 until 52) {
                 val monday = startDate.plusWeeks(weekIndex.toLong())
