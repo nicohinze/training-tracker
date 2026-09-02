@@ -43,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
     room {
