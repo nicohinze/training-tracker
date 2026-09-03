@@ -221,4 +221,50 @@ class WorkoutJsonConverterTest {
         val result = WorkoutJsonConverter.fromJson(json)
         assertEquals(0L, result[0].second[0].workoutId)
     }
+
+    @Test
+    fun roundtrip_preservesColor() {
+        val color = 0xFF4CAF50.toInt()
+        val workout = Workout(name = "Green", color = color)
+        val input = listOf(Pair(workout, emptyList<Exercise>()))
+
+        val json = WorkoutJsonConverter.toJson(input)
+        val result = WorkoutJsonConverter.fromJson(json)
+
+        assertEquals(color, result[0].first.color)
+    }
+
+    @Test
+    fun fromJson_missingColor_usesDefault() {
+        val json =
+            """
+            {
+              "workouts": [
+                {
+                  "name": "No Color",
+                  "completionCount": 0,
+                  "totalDurationSeconds": 0,
+                  "exercises": []
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val result = WorkoutJsonConverter.fromJson(json)
+        assertEquals(DEFAULT_WORKOUT_COLOR, result[0].first.color)
+    }
+
+    @Test
+    fun roundtrip_multipleWorkoutsPreserveDifferentColors() {
+        val input = listOf(
+            Pair(Workout(name = "Blue", color = 0xFF2196F3.toInt()), emptyList<Exercise>()),
+            Pair(Workout(name = "Red", color = 0xFFF44336.toInt()), emptyList<Exercise>()),
+        )
+
+        val json = WorkoutJsonConverter.toJson(input)
+        val result = WorkoutJsonConverter.fromJson(json)
+
+        assertEquals(0xFF2196F3.toInt(), result[0].first.color)
+        assertEquals(0xFFF44336.toInt(), result[1].first.color)
+    }
 }
