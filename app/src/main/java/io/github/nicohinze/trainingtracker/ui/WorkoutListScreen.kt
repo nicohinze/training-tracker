@@ -89,10 +89,15 @@ fun WorkoutListScreen(
         scope.launch {
             try {
                 val json = readJsonFromUri(context, uri)
-                val count = viewModel.importJson(json)
-                Toast.makeText(context, "Imported $count workout(s)", Toast.LENGTH_SHORT).show()
+                viewModel
+                    .importJson(json)
+                    .onSuccess { count ->
+                        Toast.makeText(context, "Imported $count workout(s)", Toast.LENGTH_SHORT).show()
+                    }.onFailure {
+                        Toast.makeText(context, "Import failed: invalid file", Toast.LENGTH_SHORT).show()
+                    }
             } catch (_: Exception) {
-                Toast.makeText(context, "Import failed: invalid file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Import failed: could not read file", Toast.LENGTH_SHORT).show()
             }
         }
     }
