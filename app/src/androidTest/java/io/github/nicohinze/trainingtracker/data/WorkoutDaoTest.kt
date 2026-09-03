@@ -323,4 +323,121 @@ class WorkoutDaoTest {
         assertEquals(1, dao.getExercisesForWorkout(id1).first().size)
         assertEquals(2, dao.getExercisesForWorkout(id2).first().size)
     }
+
+    @Test
+    fun insertAndGetCompletion() = runTest {
+        val workoutId = dao.insertWorkout(Workout(name = "Test"))
+        val completion = WorkoutCompletion(
+            workoutId = workoutId,
+            completedAt = 1000000L,
+            durationSeconds = 300L,
+        )
+        dao.insertCompletion(completion)
+
+        val completions = dao.getCompletionsSince(0L).first()
+        assertEquals(1, completions.size)
+        assertEquals(workoutId, completions[0].workoutId)
+        assertEquals(1000000L, completions[0].completedAt)
+        assertEquals(300L, completions[0].durationSeconds)
+    }
+
+    @Test
+    fun getCompletionsSince_filtersOlderEntries() = runTest {
+        val workoutId = dao.insertWorkout(Workout(name = "Test"))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 100L, durationSeconds = 60L))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 500L, durationSeconds = 120L))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 900L, durationSeconds = 180L))
+
+        val completions = dao.getCompletionsSince(500L).first()
+        assertEquals(2, completions.size)
+        assertEquals(500L, completions[0].completedAt)
+        assertEquals(900L, completions[1].completedAt)
+    }
+
+    @Test
+    fun getCompletionsSince_orderedByCompletedAtAsc() = runTest {
+        val workoutId = dao.insertWorkout(Workout(name = "Test"))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 300L, durationSeconds = 60L))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 100L, durationSeconds = 60L))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 200L, durationSeconds = 60L))
+
+        val completions = dao.getCompletionsSince(0L).first()
+        assertEquals(100L, completions[0].completedAt)
+        assertEquals(200L, completions[1].completedAt)
+        assertEquals(300L, completions[2].completedAt)
+    }
+
+    @Test
+    fun getCompletionsSince_returnsEmptyWhenNoCompletions() = runTest {
+        dao.insertWorkout(Workout(name = "Test"))
+        val completions = dao.getCompletionsSince(0L).first()
+        assertTrue(completions.isEmpty())
+    }
+
+    @Test
+    fun deleteWorkout_cascadesDeleteToCompletions() = runTest {
+        val workoutId = dao.insertWorkout(Workout(name = "Test"))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 100L, durationSeconds = 60L))
+        dao.insertCompletion(WorkoutCompletion(workoutId = workoutId, completedAt = 200L, durationSeconds = 120L))
+
+        val workout = dao.getWorkout(workoutId)!!
+        dao.deleteWorkout(workout)
+
+        val completions = dao.getCompletionsSince(0L).first()
+        assertTrue(completions.isEmpty())
+    }
+
+    @Test
+    fun getAllWorkoutsWithExercises_returnsAllPairs() = runTest {
+        val id1 = dao.insertWorkout(Workout(name = "Push"))
+        val id2 = dao.insertWorkout(Workout(name = "Pull"))
+        dao.insertExercise(
+            Exercise(workoutId = id1, name = "Bench", sets = 3, amount = 10, pauseSeconds = 60, orderIndex = 0),
+        )
+        dao.insertExercise(
+            Exercise(workoutId = id1, name = "Flies", sets = 3, amount = 12, pauseSeconds = 45, orderIndex = 1),
+        )
+        dao.insertExercise(
+            Exercise(workoutId = id2, name = "Rows", sets = 4, amount = 8, pauseSeconds = 90, orderIndex = 0),
+        )
+
+        val result = dao.getAllWorkoutsWithExercises()
+        assertEquals(2, result.size)
+        assertEquals("Pull", result[0].first.name)
+        assertEquals(1, result[0].second.size)
+        assertEquals("Push", result[1].first.name)
+        assertEquals(2, result[1].second.size)
+    }
+
+    @Test
+    fun getAllWorkoutsWithExercises_returnsEmptyForNoWorkouts() = runTest {
+        val result = dao.getAllWorkoutsWithExercises()
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun insertWorkout_persistsColor() = runTest {
+        val color = 0xFF4CAF50.toInt()
+        val id = dao.insertWorkout(Workout(name = "Green Workout", color = color))
+        val workout = dao.getWorkout(id)!!
+        assertEquals(color, workout.color)
+    }
+
+    @Test
+    fun insertWorkout_usesDefaultColor() = runTest {
+        val id = dao.insertWorkout(Workout(name = "Default Color"))
+        val workout = dao.getWorkout(id)!!
+        assertEquals(DEFAULT_WORKOUT_COLOR, workout.color)
+    }
+
+    @Test
+    fun updateWorkout_changesColor() = runTest {
+        val id = dao.insertWorkout(Workout(name = "Test", color = 0xFF2196F3.toInt()))
+        val workout = dao.getWorkout(id)!!
+        val newColor = 0xFFF44336.toInt()
+        dao.updateWorkout(workout.copy(color = newColor))
+
+        val updated = dao.getWorkout(id)!!
+        assertEquals(newColor, updated.color)
+    }
 }
