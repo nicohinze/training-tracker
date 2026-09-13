@@ -4,20 +4,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object WorkoutJsonConverter {
-    fun toJson(workoutsWithExercises: List<Pair<Workout, List<Exercise>>>): String {
+    fun toJson(workoutsWithData: List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>>): String {
         val root = JSONObject()
         val workoutsArray = JSONArray()
-        for ((workout, exercises) in workoutsWithExercises) {
-            workoutsArray.put(workoutToJson(workout, exercises))
+        for ((workout, exercises, completions) in workoutsWithData) {
+            workoutsArray.put(workoutToJson(workout, exercises, completions))
         }
         root.put("workouts", workoutsArray)
         return root.toString(2)
     }
 
-    fun fromJson(json: String): List<Pair<Workout, List<Exercise>>> {
+    fun fromJson(json: String): List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>> {
         val root = JSONObject(json)
         val workoutsArray = root.getJSONArray("workouts")
-        val result = mutableListOf<Pair<Workout, List<Exercise>>>()
+        val result = mutableListOf<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>>()
         for (i in 0 until workoutsArray.length()) {
             val workoutObj = workoutsArray.getJSONObject(i)
             val workout = Workout(
@@ -43,12 +43,28 @@ object WorkoutJsonConverter {
                     ),
                 )
             }
-            result.add(Pair(workout, exercises))
+            val completionsArray = workoutObj.optJSONArray("completions") ?: JSONArray()
+            val completions = mutableListOf<WorkoutCompletion>()
+            for (j in 0 until completionsArray.length()) {
+                val completionObj = completionsArray.getJSONObject(j)
+                completions.add(
+                    WorkoutCompletion(
+                        workoutId = 0,
+                        completedAt = completionObj.getLong("completedAt"),
+                        durationSeconds = completionObj.getLong("durationSeconds"),
+                    ),
+                )
+            }
+            result.add(Triple(workout, exercises, completions))
         }
         return result
     }
 
-    private fun workoutToJson(workout: Workout, exercises: List<Exercise>): JSONObject {
+    private fun workoutToJson(
+        workout: Workout,
+        exercises: List<Exercise>,
+        completions: List<WorkoutCompletion>,
+    ): JSONObject {
         val obj = JSONObject()
         obj.put("name", workout.name)
         obj.put("completionCount", workout.completionCount)
@@ -59,6 +75,11 @@ object WorkoutJsonConverter {
             exercisesArray.put(exerciseToJson(exercise))
         }
         obj.put("exercises", exercisesArray)
+        val completionsArray = JSONArray()
+        for (completion in completions) {
+            completionsArray.put(completionToJson(completion))
+        }
+        obj.put("completions", completionsArray)
         return obj
     }
 
@@ -71,6 +92,13 @@ object WorkoutJsonConverter {
         obj.put("intensity", exercise.intensity ?: JSONObject.NULL)
         obj.put("pauseSeconds", exercise.pauseSeconds)
         obj.put("orderIndex", exercise.orderIndex)
+        return obj
+    }
+
+    private fun completionToJson(completion: WorkoutCompletion): JSONObject {
+        val obj = JSONObject()
+        obj.put("completedAt", completion.completedAt)
+        obj.put("durationSeconds", completion.durationSeconds)
         return obj
     }
 }

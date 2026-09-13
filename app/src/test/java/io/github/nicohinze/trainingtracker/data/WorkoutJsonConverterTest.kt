@@ -15,17 +15,18 @@ class WorkoutJsonConverterTest {
     @Test
     fun roundtrip_singleWorkoutNoExercises() {
         val workout = Workout(name = "Rest Day", completionCount = 2, totalDurationSeconds = 600)
-        val input = listOf(Pair(workout, emptyList<Exercise>()))
+        val input = listOf(Triple(workout, emptyList<Exercise>(), emptyList<WorkoutCompletion>()))
 
         val json = WorkoutJsonConverter.toJson(input)
         val result = WorkoutJsonConverter.fromJson(json)
 
         assertEquals(1, result.size)
-        val (parsedWorkout, parsedExercises) = result[0]
+        val (parsedWorkout, parsedExercises, parsedCompletions) = result[0]
         assertEquals("Rest Day", parsedWorkout.name)
         assertEquals(2, parsedWorkout.completionCount)
         assertEquals(600L, parsedWorkout.totalDurationSeconds)
         assertEquals(0, parsedExercises.size)
+        assertEquals(0, parsedCompletions.size)
     }
 
     @Test
@@ -53,7 +54,7 @@ class WorkoutJsonConverterTest {
                 orderIndex = 1,
             ),
         )
-        val input = listOf(Pair(workout, exercises))
+        val input = listOf(Triple(workout, exercises, emptyList<WorkoutCompletion>()))
 
         val json = WorkoutJsonConverter.toJson(input)
         val result = WorkoutJsonConverter.fromJson(json)
@@ -84,7 +85,7 @@ class WorkoutJsonConverterTest {
     @Test
     fun roundtrip_multipleWorkouts() {
         val input = listOf(
-            Pair(
+            Triple(
                 Workout(name = "Push", completionCount = 1, totalDurationSeconds = 1800),
                 listOf(
                     Exercise(
@@ -96,8 +97,9 @@ class WorkoutJsonConverterTest {
                         orderIndex = 0,
                     ),
                 ),
+                emptyList<WorkoutCompletion>(),
             ),
-            Pair(
+            Triple(
                 Workout(name = "Pull", completionCount = 3, totalDurationSeconds = 2400),
                 listOf(
                     Exercise(
@@ -118,6 +120,7 @@ class WorkoutJsonConverterTest {
                         orderIndex = 1,
                     ),
                 ),
+                emptyList<WorkoutCompletion>(),
             ),
         )
 
@@ -156,13 +159,14 @@ class WorkoutJsonConverterTest {
         val result = WorkoutJsonConverter.fromJson(json)
 
         assertEquals(1, result.size)
-        val (workout, exercises) = result[0]
+        val (workout, exercises, completions) = result[0]
         assertEquals("Minimal", workout.name)
         assertEquals(0, workout.completionCount)
         assertEquals(0L, workout.totalDurationSeconds)
         assertEquals(1, exercises.size)
         assertEquals(ExerciseType.REPS, exercises[0].type)
         assertNull(exercises[0].intensity)
+        assertEquals(0, completions.size)
     }
 
     @Test
@@ -184,6 +188,7 @@ class WorkoutJsonConverterTest {
 
         assertEquals(1, result.size)
         assertEquals(0, result[0].second.size)
+        assertEquals(0, result[0].third.size)
     }
 
     @Test(expected = org.json.JSONException::class)
@@ -226,7 +231,7 @@ class WorkoutJsonConverterTest {
     fun roundtrip_preservesColor() {
         val color = 0xFF4CAF50.toInt()
         val workout = Workout(name = "Green", color = color)
-        val input = listOf(Pair(workout, emptyList<Exercise>()))
+        val input = listOf(Triple(workout, emptyList<Exercise>(), emptyList<WorkoutCompletion>()))
 
         val json = WorkoutJsonConverter.toJson(input)
         val result = WorkoutJsonConverter.fromJson(json)
@@ -257,8 +262,16 @@ class WorkoutJsonConverterTest {
     @Test
     fun roundtrip_multipleWorkoutsPreserveDifferentColors() {
         val input = listOf(
-            Pair(Workout(name = "Blue", color = 0xFF2196F3.toInt()), emptyList<Exercise>()),
-            Pair(Workout(name = "Red", color = 0xFFF44336.toInt()), emptyList<Exercise>()),
+            Triple(
+                Workout(name = "Blue", color = 0xFF2196F3.toInt()),
+                emptyList<Exercise>(),
+                emptyList<WorkoutCompletion>(),
+            ),
+            Triple(
+                Workout(name = "Red", color = 0xFFF44336.toInt()),
+                emptyList<Exercise>(),
+                emptyList<WorkoutCompletion>(),
+            ),
         )
 
         val json = WorkoutJsonConverter.toJson(input)
@@ -266,5 +279,100 @@ class WorkoutJsonConverterTest {
 
         assertEquals(0xFF2196F3.toInt(), result[0].first.color)
         assertEquals(0xFFF44336.toInt(), result[1].first.color)
+    }
+
+    @Test
+    fun roundtrip_workoutWithCompletions() {
+        val workout = Workout(name = "Push Day", completionCount = 2, totalDurationSeconds = 7200)
+        val completions = listOf(
+            WorkoutCompletion(workoutId = 1, completedAt = 1694534400000, durationSeconds = 3600),
+            WorkoutCompletion(workoutId = 1, completedAt = 1694620800000, durationSeconds = 3600),
+        )
+        val input = listOf(Triple(workout, emptyList<Exercise>(), completions))
+
+        val json = WorkoutJsonConverter.toJson(input)
+        val result = WorkoutJsonConverter.fromJson(json)
+
+        assertEquals(1, result.size)
+        val (_, _, parsedCompletions) = result[0]
+        assertEquals(2, parsedCompletions.size)
+        assertEquals(1694534400000, parsedCompletions[0].completedAt)
+        assertEquals(3600L, parsedCompletions[0].durationSeconds)
+        assertEquals(1694620800000, parsedCompletions[1].completedAt)
+        assertEquals(3600L, parsedCompletions[1].durationSeconds)
+    }
+
+    @Test
+    fun fromJson_parsedCompletionsHaveZeroWorkoutId() {
+        val json =
+            """
+            {
+              "workouts": [
+                {
+                  "name": "Test",
+                  "completions": [
+                    {
+                      "completedAt": 1694534400000,
+                      "durationSeconds": 3600
+                    }
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val result = WorkoutJsonConverter.fromJson(json)
+        assertEquals(0L, result[0].third[0].workoutId)
+    }
+
+    @Test
+    fun fromJson_noCompletionsKey_treatsAsEmpty() {
+        val json =
+            """
+            {
+              "workouts": [
+                {
+                  "name": "Old Export",
+                  "completionCount": 5,
+                  "totalDurationSeconds": 9000,
+                  "exercises": []
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val result = WorkoutJsonConverter.fromJson(json)
+
+        assertEquals(1, result.size)
+        assertEquals(0, result[0].third.size)
+    }
+
+    @Test
+    fun roundtrip_workoutWithExercisesAndCompletions() {
+        val workout = Workout(name = "Full", completionCount = 1, totalDurationSeconds = 1800)
+        val exercises = listOf(
+            Exercise(
+                workoutId = 1,
+                name = "Squats",
+                sets = 3,
+                amount = 10,
+                pauseSeconds = 60,
+                orderIndex = 0,
+            ),
+        )
+        val completions = listOf(
+            WorkoutCompletion(workoutId = 1, completedAt = 1694534400000, durationSeconds = 1800),
+        )
+        val input = listOf(Triple(workout, exercises, completions))
+
+        val json = WorkoutJsonConverter.toJson(input)
+        val result = WorkoutJsonConverter.fromJson(json)
+
+        assertEquals(1, result.size)
+        assertEquals("Full", result[0].first.name)
+        assertEquals(1, result[0].second.size)
+        assertEquals("Squats", result[0].second[0].name)
+        assertEquals(1, result[0].third.size)
+        assertEquals(1694534400000, result[0].third[0].completedAt)
     }
 }
