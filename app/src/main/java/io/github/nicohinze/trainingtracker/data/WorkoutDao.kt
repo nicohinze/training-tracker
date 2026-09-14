@@ -59,6 +59,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_completions WHERE completedAt >= :since ORDER BY completedAt ASC")
     fun getCompletionsSince(since: Long): Flow<List<WorkoutCompletion>>
 
+    @Query("SELECT * FROM workout_completions WHERE workoutId = :workoutId ORDER BY completedAt ASC")
+    suspend fun getCompletionListForWorkout(workoutId: Long): List<WorkoutCompletion>
+
     @Transaction
     suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {
         val workout = getWorkout(workoutId)
@@ -73,6 +76,14 @@ interface WorkoutDao {
     suspend fun getAllWorkoutsWithExercises(): List<Pair<Workout, List<Exercise>>> {
         return getAllWorkoutList().map { workout ->
             Pair(workout, getExerciseListForWorkout(workout.id))
+        }
+    }
+
+    @Transaction
+    suspend fun getAllWorkoutsWithExercisesAndCompletions():
+        List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>> {
+        return getAllWorkoutList().map { workout ->
+            Triple(workout, getExerciseListForWorkout(workout.id), getCompletionListForWorkout(workout.id))
         }
     }
 
