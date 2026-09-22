@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Workout completion history is now included in JSON export/import
+- The text alignment of the month and weekday labels in the activity graph was improved
 
 ## [1.2.0] - 2026-09-03
 
