@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
@@ -126,13 +127,14 @@ private fun DayLabels() {
         val dayLabels = listOf("M", "", "W", "", "F", "", "S")
         dayLabels.forEachIndexed { index, label ->
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier.size(width = 10.dp, height = CELL_SIZE),
-                contentAlignment = Alignment.CenterEnd,
             ) {
                 if (label.isNotEmpty()) {
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
+                        lineHeight = 8.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -157,13 +159,16 @@ private fun ActivityCalendar(
                 val prevMonday = if (weekIndex > 0) startDate.plusWeeks((weekIndex - 1).toLong()) else null
                 val showMonth = prevMonday == null || monday.month != prevMonday.month
                 Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .width(CELL_SIZE)
                         .height(MONTH_LABEL_HEIGHT),
                 ) {
                     if (showMonth) {
                         Text(
-                            text = monday.month.getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale),
+                            text = monday.month
+                                .getDisplayName(TextStyle.SHORT, LocalLocale.current.platformLocale)[0]
+                                .toString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
