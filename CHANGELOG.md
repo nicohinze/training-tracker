@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Workout completion history is now included in JSON export/import
 - The text alignment of the month and weekday labels in the activity graph was improved
+- Tapping a square in the activity graph highlights it and shows which workouts were completed that day
 
 ## [1.2.0] - 2026-09-03
 

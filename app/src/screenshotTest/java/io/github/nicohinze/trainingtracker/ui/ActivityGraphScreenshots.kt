@@ -50,6 +50,7 @@ fun ActivityGraphPopulatedScreenshot() {
             ),
             onBack = {},
             today = SCREENSHOT_TODAY,
+            initialSelectedDate = SCREENSHOT_TODAY.minusDays(8),
         )
     }
 }
@@ -63,6 +64,7 @@ fun ActivityGraphEmptyScreenshot() {
             uiState = ActivityGraphUiState(),
             onBack = {},
             today = SCREENSHOT_TODAY,
+            initialSelectedDate = SCREENSHOT_TODAY.minusDays(8),
         )
     }
 }

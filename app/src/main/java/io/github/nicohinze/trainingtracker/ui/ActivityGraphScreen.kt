@@ -1,6 +1,9 @@
 package io.github.nicohinze.trainingtracker.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +30,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +51,7 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
 
@@ -69,23 +76,25 @@ internal fun ActivityGraphContent(
     uiState: ActivityGraphUiState,
     onBack: () -> Unit,
     today: LocalDate = LocalDate.now(),
+    initialSelectedDate: LocalDate? = null,
 ) {
     val startOfCurrentWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val startDate = startOfCurrentWeek.minusWeeks(51)
     val workoutMap = uiState.workouts.associateBy { it.id }
-    val dayColorMap = buildMap<LocalDate, Int> {
+    val dayCompletionsMap = buildMap<LocalDate, List<Pair<Workout, WorkoutCompletion>>> {
         for (completion in uiState.completions.sortedBy { it.completedAt }) {
             val date = Instant
                 .ofEpochMilli(completion.completedAt)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate()
-            if (!containsKey(date)) {
-                workoutMap[completion.workoutId]?.color?.let { put(date, it) }
-            }
+            val workout = workoutMap[completion.workoutId] ?: continue
+            put(date, getOrDefault(date, emptyList()) + (workout to completion))
         }
     }
+    val dayColorMap = dayCompletionsMap.mapValues { (_, entries) -> entries.first().first.color }
     val activeWorkoutIds = uiState.completions.map { it.workoutId }.toSet()
     val activeWorkouts = uiState.workouts.filter { it.id in activeWorkoutIds }
+    var selectedDate by remember { mutableStateOf(initialSelectedDate) }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -113,9 +122,26 @@ internal fun ActivityGraphContent(
             Row(verticalAlignment = Alignment.Top) {
                 DayLabels()
                 Spacer(Modifier.width(4.dp))
-                ActivityCalendar(startDate = startDate, today = today, dayColorMap = dayColorMap)
+                ActivityCalendar(
+                    startDate = startDate,
+                    today = today,
+                    dayColorMap = dayColorMap,
+                    selectedDate = selectedDate,
+                    onDateSelected = { date ->
+                        selectedDate = if (selectedDate == date) null else date
+                    },
+                )
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
+            AnimatedVisibility(visible = selectedDate != null) {
+                selectedDate?.let { date ->
+                    SelectedDayDetails(
+                        date = date,
+                        completions = dayCompletionsMap[date] ?: emptyList(),
+                    )
+                }
+            }
+            Spacer(Modifier.height(if (selectedDate != null) 16.dp else 8.dp))
             WorkoutLegend(activeWorkouts = activeWorkouts)
         }
     }
@@ -151,6 +177,8 @@ private fun ActivityCalendar(
     startDate: LocalDate,
     today: LocalDate,
     dayColorMap: Map<LocalDate, Int>,
+    selectedDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit,
 ) {
     Column(modifier = Modifier.horizontalScroll(rememberScrollState(Int.MAX_VALUE))) {
         Row {
@@ -179,7 +207,13 @@ private fun ActivityCalendar(
                 }
             }
         }
-        WeekGrid(startDate = startDate, today = today, dayColorMap = dayColorMap)
+        WeekGrid(
+            startDate = startDate,
+            today = today,
+            dayColorMap = dayColorMap,
+            selectedDate = selectedDate,
+            onDateSelected = onDateSelected,
+        )
     }
 }
 
@@ -188,7 +222,10 @@ private fun WeekGrid(
     startDate: LocalDate,
     today: LocalDate,
     dayColorMap: Map<LocalDate, Int>,
+    selectedDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit,
 ) {
+    val selectionBorderColor = MaterialTheme.colorScheme.onSurface
     Row {
         for (weekIndex in 0 until 52) {
             Column {
@@ -201,11 +238,25 @@ private fun WeekGrid(
                         colorInt != null -> Color(colorInt)
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     }
+                    val isSelected = date == selectedDate
                     Box(
                         modifier = Modifier
                             .size(CELL_SIZE)
-                            .clip(RoundedCornerShape(CELL_RADIUS))
-                            .background(bgColor),
+                            .then(
+                                if (isSelected) {
+                                    Modifier.border(1.5.dp, selectionBorderColor, RoundedCornerShape(CELL_RADIUS))
+                                } else {
+                                    Modifier
+                                },
+                            ).clip(RoundedCornerShape(CELL_RADIUS))
+                            .background(bgColor)
+                            .then(
+                                if (!isFuture) {
+                                    Modifier.clickable { onDateSelected(date) }
+                                } else {
+                                    Modifier
+                                },
+                            ),
                     )
                     if (dayOfWeek < 6) {
                         Spacer(Modifier.height(CELL_GAP))
@@ -214,6 +265,59 @@ private fun WeekGrid(
             }
             if (weekIndex < 51) {
                 Spacer(Modifier.width(CELL_GAP))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectedDayDetails(
+    date: LocalDate,
+    completions: List<Pair<Workout, WorkoutCompletion>>,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            .padding(12.dp),
+    ) {
+        Text(
+            text = date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Spacer(Modifier.height(4.dp))
+        if (completions.isEmpty()) {
+            Text(
+                text = "No workouts",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            completions.forEach { (workout, completion) ->
+                Row(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(workout.color)),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = workout.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    val minutes = completion.durationSeconds / 60
+                    Text(
+                        text = "${minutes}min",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -286,6 +390,7 @@ private fun ActivityGraphContentPreview() {
             workouts = workouts,
         ),
         onBack = {},
+        initialSelectedDate = LocalDate.now(),
     )
 }
 
