@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object WorkoutJsonConverter {
-    fun toJson(workoutsWithData: List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>>): String {
+    fun toJson(workoutsWithData: List<WorkoutWithDetails>): String {
         val root = JSONObject()
         val workoutsArray = JSONArray()
         for ((workout, exercises, completions) in workoutsWithData) {
@@ -14,10 +14,10 @@ object WorkoutJsonConverter {
         return root.toString(2)
     }
 
-    fun fromJson(json: String): List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>> {
+    fun fromJson(json: String): List<WorkoutWithDetails> {
         val root = JSONObject(json)
         val workoutsArray = root.getJSONArray("workouts")
-        val result = mutableListOf<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>>()
+        val result = mutableListOf<WorkoutWithDetails>()
         for (i in 0 until workoutsArray.length()) {
             val workoutObj = workoutsArray.getJSONObject(i)
             val workout = Workout(
@@ -55,7 +55,7 @@ object WorkoutJsonConverter {
                     ),
                 )
             }
-            result.add(Triple(workout, exercises, completions))
+            result.add(WorkoutWithDetails(workout, exercises, completions))
         }
         return result
     }
