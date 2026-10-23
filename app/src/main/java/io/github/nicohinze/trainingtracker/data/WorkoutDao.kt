@@ -101,10 +101,9 @@ interface WorkoutDao {
     }
 
     @Transaction
-    suspend fun getAllWorkoutsWithExercisesAndCompletions():
-        List<Triple<Workout, List<Exercise>, List<WorkoutCompletion>>> {
+    suspend fun getAllWorkoutsWithExercisesAndCompletions(): List<WorkoutWithDetails> {
         return getAllWorkoutList().map { workout ->
-            Triple(workout, getExerciseListForWorkout(workout.id), getCompletionListForWorkout(workout.id))
+            WorkoutWithDetails(workout, getExerciseListForWorkout(workout.id), getCompletionListForWorkout(workout.id))
         }
     }
 

@@ -76,3 +76,9 @@ data class WorkoutCompletion(
     val completedAt: Long,
     val durationSeconds: Long,
 )
+
+data class WorkoutWithDetails(
+    val workout: Workout,
+    val exercises: List<Exercise>,
+    val completions: List<WorkoutCompletion>,
+)
