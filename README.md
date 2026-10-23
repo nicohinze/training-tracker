@@ -17,11 +17,14 @@ An Android app for creating and running workouts with a set-tracking rest timer.
 ## Features
 
 - Create, edit, rename, and delete workouts
+- Assign colours to workouts for quick visual identification
 - Add exercises to workouts with configurable sets, reps, rest duration, and intensity
 - Exercise types: reps-based and time-based
 - Run workouts with an interactive timer that tracks sets and rest periods
 - Total run-time display for active workouts
 - Screen stays on during active workouts
+- Activity graph showing workout completion history over time
+- Import and export workouts as JSON (including exercises and completion history)
 
 ## Building
 
@@ -39,15 +42,18 @@ An Android app for creating and running workouts with a set-tracking rest timer.
 
 ## Architecture
 
-Single-activity app with three screens:
+Single-activity app with five screens:
 
 | Screen         | Purpose                                                                                                         |
 |----------------|-----------------------------------------------------------------------------------------------------------------|
-| Workout List   | Browse and manage workouts                                                                                      |
+| Workout List   | Browse, manage, import/export workouts                                                                          |
 | Workout Edit   | Add, edit, reorder, and delete exercises within a workout                                                       |
 | Active Workout | Run a workout with a state machine (Ready -> Exercising <-> Resting -> Finished) and coroutine-based rest timer |
+| Activity Graph | GitHub-style contribution graph showing workout completion history                                              |
+| About          | App version and info                                                                                            |
 
-Data layer uses Room with `Flow`-based queries for reactive UI updates. No DI framework - the database singleton is accessed through the `Application` class.
+Data layer uses Room with three tables (`workouts`, `exercises`, `workout_completions`) and `Flow`-based queries for reactive UI updates.
+No DI framework — the database singleton is accessed through the `Application` class.
 
 ## License
 
