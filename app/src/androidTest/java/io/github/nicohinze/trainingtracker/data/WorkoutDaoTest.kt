@@ -90,6 +90,9 @@ class WorkoutDaoTest {
         val workout = dao.getWorkout(id)!!
         assertEquals(3, workout.completionCount)
         assertEquals(360L, workout.totalDurationSeconds)
+
+        val completions = dao.getCompletionsSince(0L).first()
+        assertEquals(3, completions.size)
     }
 
     @Test
@@ -296,6 +299,9 @@ class WorkoutDaoTest {
         assertEquals(0L, w1.totalDurationSeconds)
         assertEquals(0, w2.completionCount)
         assertEquals(0L, w2.totalDurationSeconds)
+
+        val completions = dao.getCompletionsSince(0L).first()
+        assertTrue(completions.isEmpty())
     }
 
     @Test

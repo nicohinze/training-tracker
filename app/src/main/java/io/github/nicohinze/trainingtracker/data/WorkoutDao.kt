@@ -48,13 +48,34 @@ interface WorkoutDao {
         "UPDATE workouts SET completionCount = completionCount + 1, " +
             "totalDurationSeconds = totalDurationSeconds + :durationSeconds WHERE id = :workoutId",
     )
-    suspend fun completeWorkout(workoutId: Long, durationSeconds: Long)
-
-    @Query("UPDATE workouts SET completionCount = 0, totalDurationSeconds = 0")
-    suspend fun resetAllStats()
+    suspend fun updateWorkoutStats(workoutId: Long, durationSeconds: Long)
 
     @Insert
     suspend fun insertCompletion(completion: WorkoutCompletion)
+
+    @Transaction
+    suspend fun completeWorkout(workoutId: Long, durationSeconds: Long) {
+        updateWorkoutStats(workoutId, durationSeconds)
+        insertCompletion(
+            WorkoutCompletion(
+                workoutId = workoutId,
+                completedAt = System.currentTimeMillis(),
+                durationSeconds = durationSeconds,
+            ),
+        )
+    }
+
+    @Query("UPDATE workouts SET completionCount = 0, totalDurationSeconds = 0")
+    suspend fun resetWorkoutCounters()
+
+    @Query("DELETE FROM workout_completions")
+    suspend fun deleteAllCompletions()
+
+    @Transaction
+    suspend fun resetAllStats() {
+        resetWorkoutCounters()
+        deleteAllCompletions()
+    }
 
     @Query("SELECT * FROM workout_completions WHERE completedAt >= :since ORDER BY completedAt ASC")
     fun getCompletionsSince(since: Long): Flow<List<WorkoutCompletion>>

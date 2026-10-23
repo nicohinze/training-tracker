@@ -10,7 +10,6 @@ import androidx.lifecycle.viewModelScope
 import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
-import io.github.nicohinze.trainingtracker.data.WorkoutCompletion
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -143,13 +142,6 @@ class ActiveWorkoutViewModel(
             _uiState.value = updated.copy(state = ActiveState.FINISHED)
             viewModelScope.launch {
                 dao.completeWorkout(workoutId, updated.elapsedSeconds)
-                dao.insertCompletion(
-                    WorkoutCompletion(
-                        workoutId = workoutId,
-                        completedAt = System.currentTimeMillis(),
-                        durationSeconds = updated.elapsedSeconds,
-                    ),
-                )
             }
             return
         }
