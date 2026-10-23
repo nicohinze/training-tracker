@@ -129,9 +129,9 @@ fun WorkoutListScreen(
 }
 
 private fun readJsonFromUri(context: Context, uri: Uri): String {
-    return context.contentResolver.openInputStream(uri)!!.use { inputStream ->
-        inputStream.bufferedReader().readText()
-    }
+    val stream = context.contentResolver.openInputStream(uri)
+        ?: throw IllegalArgumentException("Could not open file")
+    return stream.use { it.bufferedReader().readText() }
 }
 
 private fun writeJsonToUri(context: Context, uri: Uri, json: String) {
@@ -490,7 +490,8 @@ private fun ColorPickerRow(
                                         CircleShape,
                                     )
                                 },
-                            ).clickable { onColorSelected(color) },
+                            )
+                            .clickable { onColorSelected(color) },
                     )
                 }
             }
