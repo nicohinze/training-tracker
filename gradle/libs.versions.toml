@@ -1,6 +1,7 @@
 [versions]
 activityCompose = "1.13.0"
 agp = "9.4.1"
+benManesVersions = "0.66.0"
 composeBom = "2026.09.00"
 composeScreenshot = "0.0.1-alpha16"
 coreKtx = "1.19.0"
@@ -47,6 +48,7 @@ screenshot-validation-api = { group = "com.android.tools.screenshot", name = "sc
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+ben-manes-versions = { id = "com.github.ben-manes.versions", version.ref = "benManesVersions" }
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "composeScreenshot" }
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
