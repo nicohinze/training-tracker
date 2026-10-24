@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
@@ -64,7 +65,8 @@ private val MONTH_LABEL_HEIGHT = 14.dp
 @Composable
 fun ActivityGraphScreen(
     onBack: () -> Unit,
-    viewModel: ActivityGraphViewModel = viewModel(),
+    factory: ViewModelProvider.Factory? = null,
+    viewModel: ActivityGraphViewModel = viewModel(factory = factory),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     ActivityGraphContent(uiState = uiState, onBack = onBack)
@@ -248,7 +250,8 @@ private fun WeekGrid(
                                 } else {
                                     Modifier
                                 },
-                            ).clip(RoundedCornerShape(CELL_RADIUS))
+                            )
+                            .clip(RoundedCornerShape(CELL_RADIUS))
                             .background(bgColor)
                             .then(
                                 if (!isFuture) {

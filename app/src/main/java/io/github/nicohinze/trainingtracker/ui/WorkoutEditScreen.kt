@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.ExerciseType
@@ -54,7 +55,8 @@ import io.github.nicohinze.trainingtracker.viewmodel.WorkoutEditViewModel
 @Composable
 fun WorkoutEditScreen(
     onBack: () -> Unit,
-    viewModel: WorkoutEditViewModel = viewModel(),
+    factory: ViewModelProvider.Factory? = null,
+    viewModel: WorkoutEditViewModel = viewModel(factory = factory),
 ) {
     val workout by viewModel.workout.collectAsState()
     val exercises by viewModel.exercises.collectAsState()

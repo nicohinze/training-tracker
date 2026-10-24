@@ -1,20 +1,18 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Workout
+import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import io.github.nicohinze.trainingtracker.data.WorkoutJsonConverter
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WorkoutListViewModel(
-    application: Application,
-) : AndroidViewModel(application) {
-    private val dao = (application as WorkoutApplication).database.workoutDao()
-
+    private val dao: WorkoutDao,
+) : ViewModel() {
     val workouts = dao
         .getAllWorkouts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -64,5 +62,12 @@ class WorkoutListViewModel(
     suspend fun exportJson(): String {
         val workoutsWithData = dao.getAllWorkoutsWithExercisesAndCompletions()
         return WorkoutJsonConverter.toJson(workoutsWithData)
+    }
+
+    companion object {
+        fun factory(dao: WorkoutDao) = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = WorkoutListViewModel(dao) as T
+        }
     }
 }

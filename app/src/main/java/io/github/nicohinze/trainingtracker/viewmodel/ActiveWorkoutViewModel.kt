@@ -1,15 +1,15 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
-import android.app.Application
 import android.os.SystemClock
-import android.os.VibrationEffect
-import android.os.Vibrator
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import io.github.nicohinze.trainingtracker.WorkoutApplication
+import androidx.lifecycle.viewmodel.CreationExtras
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
+import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,13 +40,12 @@ data class ActiveWorkoutUiState(
 }
 
 private const val VIBRATION_COUNTDOWN_THRESHOLD = 3
-private const val VIBRATION_DURATION_MS = 100L
 
 class ActiveWorkoutViewModel(
-    application: Application,
+    private val dao: WorkoutDao,
     savedStateHandle: SavedStateHandle,
-) : AndroidViewModel(application) {
-    private val dao = (application as WorkoutApplication).database.workoutDao()
+    private val onVibrate: () -> Unit = {},
+) : ViewModel() {
     private val workoutId: Long = savedStateHandle.get<Long>("workoutId") ?: 0L
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState = _uiState.asStateFlow()
@@ -203,7 +202,7 @@ class ActiveWorkoutViewModel(
                 val remaining = totalSeconds - (elapsedMs / 1000).toInt()
                 if (remaining > 0) {
                     if (remaining in 1..VIBRATION_COUNTDOWN_THRESHOLD) {
-                        vibrate()
+                        onVibrate()
                     }
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
@@ -219,8 +218,13 @@ class ActiveWorkoutViewModel(
         }
     }
 
-    private fun vibrate() {
-        val vibrator = getApplication<Application>().getSystemService(Vibrator::class.java) ?: return
-        vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
+    companion object {
+        fun factory(dao: WorkoutDao, onVibrate: () -> Unit) = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras,
+            ): T = ActiveWorkoutViewModel(dao, extras.createSavedStateHandle(), onVibrate) as T
+        }
     }
 }
