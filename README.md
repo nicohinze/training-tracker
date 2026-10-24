@@ -12,6 +12,7 @@ An Android app for creating and running workouts with a set-tracking rest timer.
   <img src="docs/screenshots/workout_edit.png" width="250" alt="Workout Edit">
   <img src="docs/screenshots/active_workout_exercising.png" width="250" alt="Active Workout Exercising">
   <img src="docs/screenshots/active_workout_resting.png" width="250" alt="Active Workout Resting">
+  <img src="docs/screenshots/activity_graph.png" width="250" alt="Activity Graph">
 </p>
 
 ## Features
