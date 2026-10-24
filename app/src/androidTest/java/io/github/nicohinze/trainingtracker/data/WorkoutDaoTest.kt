@@ -394,7 +394,7 @@ class WorkoutDaoTest {
     }
 
     @Test
-    fun getAllWorkoutsWithExercises_returnsAllPairs() = runTest {
+    fun getAllWorkoutsWithExercisesAndCompletions_returnsAllDetails() = runTest {
         val id1 = dao.insertWorkout(Workout(name = "Push"))
         val id2 = dao.insertWorkout(Workout(name = "Pull"))
         dao.insertExercise(
@@ -407,17 +407,17 @@ class WorkoutDaoTest {
             Exercise(workoutId = id2, name = "Rows", sets = 4, amount = 8, pauseSeconds = 90, orderIndex = 0),
         )
 
-        val result = dao.getAllWorkoutsWithExercises()
+        val result = dao.getAllWorkoutsWithExercisesAndCompletions()
         assertEquals(2, result.size)
-        assertEquals("Pull", result[0].first.name)
-        assertEquals(1, result[0].second.size)
-        assertEquals("Push", result[1].first.name)
-        assertEquals(2, result[1].second.size)
+        val pull = result.first { it.workout.name == "Pull" }
+        val push = result.first { it.workout.name == "Push" }
+        assertEquals(1, pull.exercises.size)
+        assertEquals(2, push.exercises.size)
     }
 
     @Test
-    fun getAllWorkoutsWithExercises_returnsEmptyForNoWorkouts() = runTest {
-        val result = dao.getAllWorkoutsWithExercises()
+    fun getAllWorkoutsWithExercisesAndCompletions_returnsEmptyForNoWorkouts() = runTest {
+        val result = dao.getAllWorkoutsWithExercisesAndCompletions()
         assertTrue(result.isEmpty())
     }
 

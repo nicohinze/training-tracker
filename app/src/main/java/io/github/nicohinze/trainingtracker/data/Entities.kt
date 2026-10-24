@@ -1,9 +1,11 @@
 package io.github.nicohinze.trainingtracker.data
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 
 val WORKOUT_COLORS = listOf(
     0xFF2196F3.toInt(), // Blue
@@ -78,7 +80,9 @@ data class WorkoutCompletion(
 )
 
 data class WorkoutWithDetails(
-    val workout: Workout,
+    @Embedded val workout: Workout,
+    @Relation(parentColumn = "id", entityColumn = "workoutId")
     val exercises: List<Exercise>,
+    @Relation(parentColumn = "id", entityColumn = "workoutId")
     val completions: List<WorkoutCompletion>,
 )
