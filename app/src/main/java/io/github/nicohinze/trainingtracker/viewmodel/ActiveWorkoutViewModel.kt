@@ -46,7 +46,9 @@ class ActiveWorkoutViewModel(
     savedStateHandle: SavedStateHandle,
     private val onVibrate: () -> Unit = {},
 ) : ViewModel() {
-    private val workoutId: Long = savedStateHandle.get<Long>("workoutId") ?: 0L
+    private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>("workoutId")) {
+        "workoutId nav argument is required for ActiveWorkoutViewModel"
+    }
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState = _uiState.asStateFlow()
     private var timerJob: Job? = null
