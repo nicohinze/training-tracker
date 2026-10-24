@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.DEFAULT_WORKOUT_COLOR
 import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
@@ -76,7 +77,8 @@ fun WorkoutListScreen(
     onStartWorkout: (Long) -> Unit,
     onAbout: () -> Unit = {},
     onActivity: () -> Unit = {},
-    viewModel: WorkoutListViewModel = viewModel(),
+    factory: ViewModelProvider.Factory? = null,
+    viewModel: WorkoutListViewModel = viewModel(factory = factory),
 ) {
     val workouts by viewModel.workouts.collectAsState()
     val context = LocalContext.current
