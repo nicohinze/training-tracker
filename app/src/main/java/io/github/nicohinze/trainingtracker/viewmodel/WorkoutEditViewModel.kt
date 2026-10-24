@@ -20,7 +20,9 @@ class WorkoutEditViewModel(
     private val dao: WorkoutDao,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
-    private val workoutId: Long = savedStateHandle.get<Long>("workoutId") ?: 0L
+    private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>("workoutId")) {
+        "workoutId nav argument is required for WorkoutEditViewModel"
+    }
 
     private val _workout = MutableStateFlow<Workout?>(null)
     val workout = _workout.asStateFlow()
