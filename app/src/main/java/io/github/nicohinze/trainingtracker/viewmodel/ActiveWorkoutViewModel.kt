@@ -140,9 +140,10 @@ class ActiveWorkoutViewModel(
         val updated = current.copy(completedSets = newCompleted)
         if (updated.isLastSetOfExercise && updated.isLastExercise) {
             elapsedJob?.cancel()
-            _uiState.value = updated.copy(state = ActiveState.FINISHED)
+            val finalElapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime - totalPausedMs) / 1000
+            _uiState.value = updated.copy(state = ActiveState.FINISHED, elapsedSeconds = finalElapsed)
             viewModelScope.launch {
-                dao.completeWorkout(workoutId, updated.elapsedSeconds)
+                dao.completeWorkout(workoutId, finalElapsed)
             }
             return
         }
