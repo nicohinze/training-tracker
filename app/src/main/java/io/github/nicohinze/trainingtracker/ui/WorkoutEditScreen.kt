@@ -71,7 +71,7 @@ fun WorkoutEditScreen(
             viewModel.updateExercise(exercise, name, sets, amount, type, intensity, pause)
         },
         onDeleteExercise = { viewModel.deleteExercise(it) },
-        onMoveExercise = { from, to -> viewModel.moveExercise(from, to, exercises) },
+        onMoveExercise = { from, to -> viewModel.moveExercise(from, to) },
     )
 }
 
