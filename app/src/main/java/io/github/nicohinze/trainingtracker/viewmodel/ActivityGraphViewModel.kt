@@ -1,11 +1,11 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import io.github.nicohinze.trainingtracker.WorkoutApplication
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutCompletion
+import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
@@ -19,9 +19,8 @@ data class ActivityGraphUiState(
 )
 
 class ActivityGraphViewModel(
-    application: Application,
-) : AndroidViewModel(application) {
-    private val dao = (application as WorkoutApplication).database.workoutDao()
+    dao: WorkoutDao,
+) : ViewModel() {
     val uiState = flow {
         val since = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(HISTORY_DAYS)
         emitAll(
@@ -36,5 +35,10 @@ class ActivityGraphViewModel(
 
     companion object {
         private const val HISTORY_DAYS = 365L
+
+        fun factory(dao: WorkoutDao) = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = ActivityGraphViewModel(dao) as T
+        }
     }
 }

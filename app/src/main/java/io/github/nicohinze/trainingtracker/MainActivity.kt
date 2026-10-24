@@ -1,6 +1,8 @@
 package io.github.nicohinze.trainingtracker
 
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -19,11 +21,23 @@ import io.github.nicohinze.trainingtracker.ui.ActivityGraphScreen
 import io.github.nicohinze.trainingtracker.ui.WorkoutEditScreen
 import io.github.nicohinze.trainingtracker.ui.WorkoutListScreen
 import io.github.nicohinze.trainingtracker.ui.theme.TrainingTrackerTheme
+import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutViewModel
+import io.github.nicohinze.trainingtracker.viewmodel.ActivityGraphViewModel
+import io.github.nicohinze.trainingtracker.viewmodel.WorkoutEditViewModel
+import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
+
+private const val VIBRATION_DURATION_MS = 100L
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val dao = (application as WorkoutApplication).database.workoutDao()
+        val vibrator = getSystemService(Vibrator::class.java)
+        val onVibrate = {
+            vibrator?.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
+            Unit
+        }
         setContent {
             TrainingTrackerTheme {
                 Surface(
@@ -47,6 +61,7 @@ class MainActivity : ComponentActivity() {
                                 onActivity = {
                                     navController.navigate("activity_graph")
                                 },
+                                factory = WorkoutListViewModel.factory(dao),
                             )
                         }
                         composable("about") {
@@ -57,6 +72,7 @@ class MainActivity : ComponentActivity() {
                         composable("activity_graph") {
                             ActivityGraphScreen(
                                 onBack = { navController.popBackStack() },
+                                factory = ActivityGraphViewModel.factory(dao),
                             )
                         }
                         composable(
@@ -65,6 +81,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             WorkoutEditScreen(
                                 onBack = { navController.popBackStack() },
+                                factory = WorkoutEditViewModel.factory(dao),
                             )
                         }
                         composable(
@@ -73,6 +90,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             ActiveWorkoutScreen(
                                 onBack = { navController.popBackStack() },
+                                factory = ActiveWorkoutViewModel.factory(dao, onVibrate),
                             )
                         }
                     }

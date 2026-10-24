@@ -1,13 +1,15 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import io.github.nicohinze.trainingtracker.WorkoutApplication
+import androidx.lifecycle.viewmodel.CreationExtras
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.ExerciseType
 import io.github.nicohinze.trainingtracker.data.Workout
+import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,10 +17,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WorkoutEditViewModel(
-    application: Application,
+    private val dao: WorkoutDao,
     savedStateHandle: SavedStateHandle,
-) : AndroidViewModel(application) {
-    private val dao = (application as WorkoutApplication).database.workoutDao()
+) : ViewModel() {
     private val workoutId: Long = savedStateHandle.get<Long>("workoutId") ?: 0L
 
     private val _workout = MutableStateFlow<Workout?>(null)
@@ -98,6 +99,16 @@ class WorkoutEditViewModel(
             val item = mutable.removeAt(from)
             mutable.add(to, item)
             dao.reorderExercises(mutable)
+        }
+    }
+
+    companion object {
+        fun factory(dao: WorkoutDao) = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(
+                modelClass: Class<T>,
+                extras: CreationExtras,
+            ): T = WorkoutEditViewModel(dao, extras.createSavedStateHandle()) as T
         }
     }
 }
