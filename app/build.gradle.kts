@@ -59,6 +59,7 @@ detekt {
 }
 
 ktlint {
+    version = "1.8.0"
     android = true
     ignoreFailures = false
     reporters {
