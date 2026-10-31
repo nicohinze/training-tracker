@@ -214,7 +214,8 @@ class ActiveWorkoutViewModel(
                     }
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
-                    val ctx = _uiState.value.restContext!!
+                    val ctx = _uiState.value.restContext
+                        ?: break
                     _uiState.value = _uiState.value.copy(
                         state = ActiveState.EXERCISING,
                         currentExerciseIndex = ctx.nextExerciseIndex,
