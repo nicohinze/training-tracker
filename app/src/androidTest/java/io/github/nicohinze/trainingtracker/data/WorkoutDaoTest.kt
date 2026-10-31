@@ -268,9 +268,10 @@ class WorkoutDaoTest {
             Exercise(workoutId = workoutId, name = "Ex2", sets = 4, amount = 8, pauseSeconds = 90, orderIndex = 1),
         )
 
-        val (workout, exercises) = dao.getWorkoutWithExercises(workoutId)
-        assertNotNull(workout)
-        assertEquals("Full Workout", workout!!.name)
+        val result = dao.getWorkoutWithExercises(workoutId)
+        assertNotNull(result)
+        assertEquals("Full Workout", result!!.workout.name)
+        val exercises = result.exercises.sortedBy { it.orderIndex }
         assertEquals(2, exercises.size)
         assertEquals("Ex1", exercises[0].name)
         assertEquals("Ex2", exercises[1].name)
@@ -278,9 +279,7 @@ class WorkoutDaoTest {
 
     @Test
     fun getWorkoutWithExercises_returnsNullForNonexistentWorkout() = runTest {
-        val (workout, exercises) = dao.getWorkoutWithExercises(999)
-        assertNull(workout)
-        assertTrue(exercises.isEmpty())
+        assertNull(dao.getWorkoutWithExercises(999))
     }
 
     @Test

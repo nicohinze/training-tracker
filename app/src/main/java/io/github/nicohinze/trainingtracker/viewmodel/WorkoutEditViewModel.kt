@@ -46,8 +46,7 @@ class WorkoutEditViewModel(
         pauseSeconds: Int,
     ) {
         viewModelScope.launch {
-            val maxOrder = dao.getMaxOrderIndex(workoutId)
-            dao.insertExercise(
+            dao.addExercise(
                 Exercise(
                     workoutId = workoutId,
                     name = name,
@@ -56,7 +55,6 @@ class WorkoutEditViewModel(
                     type = type,
                     intensity = intensity,
                     pauseSeconds = pauseSeconds,
-                    orderIndex = maxOrder + 1,
                 ),
             )
         }

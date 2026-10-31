@@ -81,10 +81,13 @@ interface WorkoutDao {
     fun getCompletionsSince(since: Long): Flow<List<WorkoutCompletion>>
 
     @Transaction
-    suspend fun getWorkoutWithExercises(workoutId: Long): Pair<Workout?, List<Exercise>> {
-        val workout = getWorkout(workoutId)
-        val exercises = getExerciseListForWorkout(workoutId)
-        return Pair(workout, exercises)
+    @Query("SELECT * FROM workouts WHERE id = :workoutId")
+    suspend fun getWorkoutWithExercises(workoutId: Long): WorkoutWithDetails?
+
+    @Transaction
+    suspend fun addExercise(exercise: Exercise) {
+        val maxOrder = getMaxOrderIndex(exercise.workoutId)
+        insertExercise(exercise.copy(orderIndex = maxOrder + 1))
     }
 
     @Transaction
