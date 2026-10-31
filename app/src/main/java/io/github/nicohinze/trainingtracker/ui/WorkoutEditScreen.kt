@@ -303,7 +303,6 @@ private fun ExerciseDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExerciseDialogContent(
     name: String,

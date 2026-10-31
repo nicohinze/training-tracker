@@ -61,7 +61,6 @@ private val CELL_GAP = 2.dp
 private val CELL_RADIUS = 2.dp
 private val MONTH_LABEL_HEIGHT = 14.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityGraphScreen(
     onBack: () -> Unit,
