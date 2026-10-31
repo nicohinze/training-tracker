@@ -92,8 +92,9 @@ class WorkoutEditViewModel(
     }
 
     fun moveExercise(from: Int, to: Int) {
+        val snapshot = exercises.value
         viewModelScope.launch {
-            val mutable = exercises.value.toMutableList()
+            val mutable = snapshot.toMutableList()
             val item = mutable.removeAt(from)
             mutable.add(to, item)
             dao.reorderExercises(mutable)
