@@ -24,6 +24,11 @@ enum class ActiveState {
     FINISHED,
 }
 
+data class RestContext(
+    val nextExerciseIndex: Int,
+    val nextSet: Int,
+)
+
 data class ActiveWorkoutUiState(
     val workout: Workout? = null,
     val exercises: List<Exercise> = emptyList(),
@@ -33,6 +38,7 @@ data class ActiveWorkoutUiState(
     val remainingSeconds: Int = 0,
     val elapsedSeconds: Long = 0,
     val workoutNotFound: Boolean = false,
+    val restContext: RestContext? = null,
 ) {
     val currentExercise: Exercise? get() = exercises.getOrNull(currentExerciseIndex)
     val totalSets: Int get() = currentExercise?.sets ?: 0
@@ -59,8 +65,6 @@ class ActiveWorkoutViewModel(
     private var totalPausedMs: Long = 0L
     private var stateBeforePause: ActiveState = ActiveState.EXERCISING
     private var restRemainingOnPause: Int = 0
-    private var restNextExerciseIndex: Int = 0
-    private var restNextSet: Int = 0
 
     init {
         viewModelScope.launch {
@@ -186,13 +190,12 @@ class ActiveWorkoutViewModel(
             )
             return
         }
-        restNextExerciseIndex = nextExerciseIndex
-        restNextSet = nextSet
         _uiState.value = _uiState.value.copy(
             state = ActiveState.RESTING,
             currentExerciseIndex = restExerciseIndex,
             completedSets = restSet,
             remainingSeconds = pauseSeconds,
+            restContext = RestContext(nextExerciseIndex = nextExerciseIndex, nextSet = nextSet),
         )
         startRestTimer(pauseSeconds)
     }
@@ -211,11 +214,13 @@ class ActiveWorkoutViewModel(
                     }
                     _uiState.value = _uiState.value.copy(remainingSeconds = remaining)
                 } else {
+                    val ctx = _uiState.value.restContext!!
                     _uiState.value = _uiState.value.copy(
                         state = ActiveState.EXERCISING,
-                        currentExerciseIndex = restNextExerciseIndex,
-                        completedSets = restNextSet,
+                        currentExerciseIndex = ctx.nextExerciseIndex,
+                        completedSets = ctx.nextSet,
                         remainingSeconds = 0,
+                        restContext = null,
                     )
                     break
                 }
