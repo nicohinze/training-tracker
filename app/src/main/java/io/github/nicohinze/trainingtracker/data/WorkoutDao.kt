@@ -88,6 +88,19 @@ interface WorkoutDao {
     }
 
     @Transaction
+    suspend fun importWorkouts(workoutsWithData: List<WorkoutWithDetails>) {
+        for ((workout, exercises, completions) in workoutsWithData) {
+            val workoutId = insertWorkout(workout)
+            for (exercise in exercises) {
+                insertExercise(exercise.copy(workoutId = workoutId))
+            }
+            for (completion in completions) {
+                insertCompletion(completion.copy(workoutId = workoutId))
+            }
+        }
+    }
+
+    @Transaction
     @Query("SELECT * FROM workouts ORDER BY name ASC")
     suspend fun getAllWorkoutsWithExercisesAndCompletions(): List<WorkoutWithDetails>
 
