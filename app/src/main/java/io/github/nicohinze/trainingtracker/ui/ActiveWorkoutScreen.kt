@@ -524,7 +524,8 @@ private fun ExerciseTable(
     completedSets: Int,
     bottomContent: @Composable () -> Unit = {},
 ) {
-    val currentExercise = exercises[currentExerciseIndex]
+    val currentExercise = exercises.getOrNull(currentExerciseIndex)
+        ?: return
     val listState = rememberLazyListState()
     LaunchedEffect(currentExerciseIndex) {
         listState.animateScrollToItem(currentExerciseIndex)
