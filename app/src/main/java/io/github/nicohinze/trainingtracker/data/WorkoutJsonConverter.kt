@@ -36,7 +36,8 @@ object WorkoutJsonConverter {
                         name = exerciseObj.getString("name"),
                         sets = exerciseObj.getInt("sets"),
                         amount = exerciseObj.getInt("amount"),
-                        type = ExerciseType.valueOf(exerciseObj.optString("type", "REPS")),
+                        type = ExerciseType.entries.find { it.name == exerciseObj.optString("type") }
+                            ?: ExerciseType.REPS,
                         intensity = exerciseObj.optString("intensity").takeIf { it != "null" && it.isNotEmpty() },
                         pauseSeconds = exerciseObj.getInt("pauseSeconds"),
                         orderIndex = exerciseObj.getInt("orderIndex"),
