@@ -68,12 +68,12 @@ class ActiveWorkoutViewModel(
 
     init {
         viewModelScope.launch {
-            val (workout, exercises) = dao.getWorkoutWithExercises(workoutId)
+            val details = dao.getWorkoutWithExercises(workoutId)
             _uiState.value = ActiveWorkoutUiState(
-                workout = workout,
-                exercises = exercises,
+                workout = details?.workout,
+                exercises = details?.exercises?.sortedBy { it.orderIndex } ?: emptyList(),
                 state = ActiveState.READY,
-                workoutNotFound = workout == null,
+                workoutNotFound = details?.workout == null,
             )
         }
     }

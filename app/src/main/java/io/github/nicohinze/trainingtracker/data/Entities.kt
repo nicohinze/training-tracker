@@ -57,7 +57,7 @@ data class Exercise(
     val type: ExerciseType = ExerciseType.REPS,
     val intensity: String? = null,
     val pauseSeconds: Int,
-    val orderIndex: Int,
+    val orderIndex: Int = 0,
 )
 
 @Entity(
