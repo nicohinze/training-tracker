@@ -47,15 +47,7 @@ class WorkoutListViewModel(
 
     suspend fun importJson(json: String): Result<Int> = runCatching {
         val workoutsWithData = WorkoutJsonConverter.fromJson(json)
-        for ((workout, exercises, completions) in workoutsWithData) {
-            val workoutId = dao.insertWorkout(workout)
-            for (exercise in exercises) {
-                dao.insertExercise(exercise.copy(workoutId = workoutId))
-            }
-            for (completion in completions) {
-                dao.insertCompletion(completion.copy(workoutId = workoutId))
-            }
-        }
+        dao.importWorkouts(workoutsWithData)
         workoutsWithData.size
     }
 
