@@ -2,7 +2,7 @@ package io.github.nicohinze.trainingtracker
 
 import android.os.Bundle
 import android.os.VibrationEffect
-import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -78,10 +78,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val dao = (application as WorkoutApplication).database.workoutDao()
-        val vibrator = getSystemService(Vibrator::class.java)
+        val vibrator = getSystemService(VibratorManager::class.java).defaultVibrator
         val onVibrate = {
-            vibrator?.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
-            Unit
+            vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
         }
         setContent {
             TrainingTrackerTheme {
