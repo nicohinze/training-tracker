@@ -62,7 +62,6 @@ import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveState
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveWorkoutScreen(
     onBack: () -> Unit,
