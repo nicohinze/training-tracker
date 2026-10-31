@@ -103,7 +103,11 @@ fun ActiveWorkoutScreen(
                 isActive = isActive,
                 elapsedSeconds = uiState.elapsedSeconds,
                 onBack = {
-                    if (isActive) showQuitDialog = true else onBack()
+                    if (isActive) {
+                        showQuitDialog = true
+                    } else {
+                        onBack()
+                    }
                 },
                 onPause = { viewModel.pauseWorkout() },
             )
