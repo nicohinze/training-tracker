@@ -70,6 +70,11 @@ fun ActiveWorkoutScreen(
     viewModel: ActiveWorkoutViewModel = viewModel(factory = factory),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    LaunchedEffect(uiState.workoutNotFound) {
+        if (uiState.workoutNotFound) {
+            onBack()
+        }
+    }
 
     val view = LocalView.current
     DisposableEffect(Unit) {

@@ -32,6 +32,7 @@ data class ActiveWorkoutUiState(
     val state: ActiveState = ActiveState.READY,
     val remainingSeconds: Int = 0,
     val elapsedSeconds: Long = 0,
+    val workoutNotFound: Boolean = false,
 ) {
     val currentExercise: Exercise? get() = exercises.getOrNull(currentExerciseIndex)
     val totalSets: Int get() = currentExercise?.sets ?: 0
@@ -68,6 +69,7 @@ class ActiveWorkoutViewModel(
                 workout = workout,
                 exercises = exercises,
                 state = ActiveState.READY,
+                workoutNotFound = workout == null,
             )
         }
     }
