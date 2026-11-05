@@ -15,6 +15,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class ActiveState {
     READY,
@@ -52,6 +53,7 @@ class ActiveWorkoutViewModel(
     private val dao: WorkoutDao,
     savedStateHandle: SavedStateHandle,
     private val onVibrate: () -> Unit = {},
+    private val clock: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
     private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>("workoutId")) {
         "workoutId nav argument is required for ActiveWorkoutViewModel"
@@ -82,7 +84,7 @@ class ActiveWorkoutViewModel(
         if (_uiState.value.exercises.isEmpty()) {
             return
         }
-        workoutStartRealtime = SystemClock.elapsedRealtime()
+        workoutStartRealtime = clock()
         totalPausedMs = 0L
         _uiState.value = _uiState.value.copy(
             state = ActiveState.EXERCISING,
@@ -99,7 +101,7 @@ class ActiveWorkoutViewModel(
             return
         }
         stateBeforePause = current.state
-        pausedAtRealtime = SystemClock.elapsedRealtime()
+        pausedAtRealtime = clock()
         if (current.state == ActiveState.RESTING) {
             restRemainingOnPause = current.remainingSeconds
             timerJob?.cancel()
@@ -112,7 +114,7 @@ class ActiveWorkoutViewModel(
         if (_uiState.value.state != ActiveState.PAUSED) {
             return
         }
-        val pauseDuration = SystemClock.elapsedRealtime() - pausedAtRealtime
+        val pauseDuration = clock() - pausedAtRealtime
         totalPausedMs += pauseDuration
         startElapsedTimer()
         if (stateBeforePause == ActiveState.RESTING) {
@@ -130,8 +132,8 @@ class ActiveWorkoutViewModel(
         elapsedJob?.cancel()
         elapsedJob = viewModelScope.launch {
             while (true) {
-                delay(1000L)
-                val elapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime - totalPausedMs) / 1000
+                delay(1000L.milliseconds)
+                val elapsed = (clock() - workoutStartRealtime - totalPausedMs) / 1000
                 _uiState.value = _uiState.value.copy(elapsedSeconds = elapsed)
             }
         }
@@ -146,7 +148,7 @@ class ActiveWorkoutViewModel(
         val updated = current.copy(completedSets = newCompleted)
         if (updated.isLastSetOfExercise && updated.isLastExercise) {
             elapsedJob?.cancel()
-            val finalElapsed = (SystemClock.elapsedRealtime() - workoutStartRealtime - totalPausedMs) / 1000
+            val finalElapsed = (clock() - workoutStartRealtime - totalPausedMs) / 1000
             _uiState.value = updated.copy(state = ActiveState.FINISHED, elapsedSeconds = finalElapsed)
             viewModelScope.launch {
                 dao.completeWorkout(workoutId, finalElapsed)
@@ -203,10 +205,10 @@ class ActiveWorkoutViewModel(
     private fun startRestTimer(totalSeconds: Int) {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
-            val restStartRealtime = SystemClock.elapsedRealtime()
+            val restStartRealtime = clock()
             while (true) {
-                delay(1000L)
-                val elapsedMs = SystemClock.elapsedRealtime() - restStartRealtime
+                delay(1000L.milliseconds)
+                val elapsedMs = clock() - restStartRealtime
                 val remaining = totalSeconds - (elapsedMs / 1000).toInt()
                 if (remaining > 0) {
                     if (remaining in 1..VIBRATION_COUNTDOWN_THRESHOLD) {
