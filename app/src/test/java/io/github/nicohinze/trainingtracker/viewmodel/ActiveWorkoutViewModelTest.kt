@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class ActiveWorkoutViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var dao: FakeWorkoutDao
-    private var vm: ActiveWorkoutViewModel? = null
+    private val createdVms = mutableListOf<ActiveWorkoutViewModel>()
     private var vibrations = 0
 
     @Before
@@ -41,12 +41,21 @@ class ActiveWorkoutViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createVm(workoutId: Long = 1L) = ActiveWorkoutViewModel(
+    private fun createVm(
+        workoutId: Long = 1L,
+        handle: SavedStateHandle = SavedStateHandle(mapOf("workoutId" to workoutId)),
+    ) = ActiveWorkoutViewModel(
         dao,
-        SavedStateHandle(mapOf("workoutId" to workoutId)),
+        handle,
         onVibrate = { vibrations++ },
         clock = { testDispatcher.scheduler.currentTime },
-    ).also { vm = it }
+    ).also { createdVms += it }
+
+    // Simulates process death: the old ViewModel's coroutines die, a new one is built from the same saved state.
+    private fun recreate(old: ActiveWorkoutViewModel, handle: SavedStateHandle): ActiveWorkoutViewModel {
+        old.viewModelScope.cancel()
+        return createVm(handle = handle)
+    }
 
     // The ViewModel's timers loop forever on the test scheduler, so its scope must be
     // cancelled before runTest finishes, otherwise runTest never completes.
@@ -54,7 +63,7 @@ class ActiveWorkoutViewModelTest {
         try {
             body()
         } finally {
-            vm?.viewModelScope?.cancel()
+            createdVms.forEach { it.viewModelScope.cancel() }
         }
     }
 
@@ -273,6 +282,85 @@ class ActiveWorkoutViewModelTest {
         assertNull(vm.uiState.value.restContext)
         assertEquals(3, vibrations)
         assertEquals(90L, vm.uiState.value.elapsedSeconds)
+    }
+
+    @Test
+    fun restore_whileResting_continuesCountdownFromRealTime() = runVmTest {
+        twoExerciseWorkout()
+        val handle = SavedStateHandle(mapOf("workoutId" to 1L))
+        val first = createVm(handle = handle)
+        first.startWorkout()
+        first.onSetFinished()
+        advanceTimeBy(10_001.milliseconds)
+        first.viewModelScope.cancel()
+        advanceTimeBy(20_000.milliseconds) // process is dead, real time keeps going
+
+        val vm = createVm(handle = handle)
+        assertEquals(ActiveState.RESTING, vm.uiState.value.state)
+        assertEquals(60, vm.uiState.value.remainingSeconds)
+        assertEquals(0, vm.uiState.value.currentExerciseIndex)
+        assertEquals(1, vm.uiState.value.completedSets)
+        advanceTimeBy(60_001.milliseconds)
+        assertEquals(ActiveState.EXERCISING, vm.uiState.value.state)
+        assertEquals(1, vm.uiState.value.completedSets)
+        assertEquals(90L, vm.uiState.value.elapsedSeconds)
+    }
+
+    @Test
+    fun restore_afterRestExpired_advancesToNextSet() = runVmTest {
+        twoExerciseWorkout()
+        val handle = SavedStateHandle(mapOf("workoutId" to 1L))
+        val first = createVm(handle = handle)
+        first.startWorkout()
+        first.onSetFinished()
+        first.viewModelScope.cancel()
+        advanceTimeBy(120_000.milliseconds)
+
+        val vm = createVm(handle = handle)
+        assertEquals(ActiveState.EXERCISING, vm.uiState.value.state)
+        assertEquals(1, vm.uiState.value.completedSets)
+        assertNull(vm.uiState.value.restContext)
+    }
+
+    @Test
+    fun restore_whilePausedDuringRest_staysPausedAndResumesWithRemainingRest() = runVmTest {
+        twoExerciseWorkout()
+        val handle = SavedStateHandle(mapOf("workoutId" to 1L))
+        val first = createVm(handle = handle)
+        first.startWorkout()
+        first.onSetFinished()
+        advanceTimeBy(10_001.milliseconds)
+        first.pauseWorkout()
+        val vm = recreate(first, handle)
+        advanceTimeBy(60_000.milliseconds)
+
+        assertEquals(ActiveState.PAUSED, vm.uiState.value.state)
+        assertEquals(80, vm.uiState.value.remainingSeconds)
+        assertEquals(10L, vm.uiState.value.elapsedSeconds)
+        vm.resumeWorkout()
+        assertEquals(ActiveState.RESTING, vm.uiState.value.state)
+        assertEquals(80, vm.uiState.value.remainingSeconds)
+        advanceTimeBy(5_001.milliseconds)
+        assertEquals(75, vm.uiState.value.remainingSeconds)
+        assertEquals(15L, vm.uiState.value.elapsedSeconds)
+    }
+
+    @Test
+    fun restore_whileExercising_keepsProgressAndElapsedTime() = runVmTest {
+        seedStandardWorkout(
+            Exercise(id = 1, workoutId = 1, name = "Ex A", sets = 1, amount = 10, pauseSeconds = 0, orderIndex = 0),
+            Exercise(id = 2, workoutId = 1, name = "Ex B", sets = 2, amount = 8, pauseSeconds = 0, orderIndex = 1),
+        )
+        val handle = SavedStateHandle(mapOf("workoutId" to 1L))
+        val first = createVm(handle = handle)
+        first.startWorkout()
+        first.onSetFinished()
+        val vm = recreate(first, handle)
+        advanceTimeBy(30_001.milliseconds)
+
+        assertEquals(ActiveState.EXERCISING, vm.uiState.value.state)
+        assertEquals(1, vm.uiState.value.currentExerciseIndex)
+        assertEquals(30L, vm.uiState.value.elapsedSeconds)
     }
 
     @Test
