@@ -58,7 +58,22 @@ object WorkoutJsonConverter {
             }
             result.add(WorkoutWithDetails(workout, exercises, completions))
         }
+        result.forEach(::validate)
         return result
+    }
+
+    // Mirrors the constraints enforced by the edit dialogs, so imports can't create states the UI never allows.
+    private fun validate(details: WorkoutWithDetails) {
+        require(details.workout.name.isNotBlank()) { "Workout name must not be blank" }
+        for (exercise in details.exercises) {
+            require(exercise.name.isNotBlank()) { "Exercise name must not be blank" }
+            require(exercise.sets > 0) { "Exercise '${exercise.name}' must have at least one set" }
+            require(exercise.amount > 0) { "Exercise '${exercise.name}' must have a positive amount" }
+            require(exercise.pauseSeconds >= 0) { "Exercise '${exercise.name}' must not have a negative pause" }
+        }
+        for (completion in details.completions) {
+            require(completion.durationSeconds >= 0) { "Completion duration must not be negative" }
+        }
     }
 
     private fun workoutToJson(
