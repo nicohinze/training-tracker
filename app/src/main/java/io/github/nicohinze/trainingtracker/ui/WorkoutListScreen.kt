@@ -69,7 +69,10 @@ import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 @Composable
 fun WorkoutListScreen(
@@ -90,7 +93,7 @@ fun WorkoutListScreen(
         uri ?: return@rememberLauncherForActivityResult
         scope.launch {
             try {
-                val json = readJsonFromUri(context, uri)
+                val json = withContext(Dispatchers.IO) { readJsonFromUri(context, uri) }
                 viewModel
                     .importJson(json)
                     .onSuccess { count ->
@@ -110,8 +113,15 @@ fun WorkoutListScreen(
         uri ?: return@rememberLauncherForActivityResult
         scope.launch {
             val json = viewModel.exportJson()
-            writeJsonToUri(context, uri, json)
-            Toast.makeText(context, "Workouts exported", Toast.LENGTH_SHORT).show()
+            val message = try {
+                withContext(Dispatchers.IO) { writeJsonToUri(context, uri, json) }
+                "Workouts exported"
+            } catch (_: IOException) {
+                "Export failed: could not write file"
+            } catch (_: SecurityException) {
+                "Export failed: no permission to write file"
+            }
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -137,9 +147,9 @@ private fun readJsonFromUri(context: Context, uri: Uri): String {
 }
 
 private fun writeJsonToUri(context: Context, uri: Uri, json: String) {
-    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-        outputStream.write(json.toByteArray())
-    }
+    val stream = context.contentResolver.openOutputStream(uri)
+        ?: throw IOException("Could not open file for writing")
+    stream.use { it.write(json.toByteArray()) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
