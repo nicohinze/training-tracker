@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reset all stats now also clears completion history instead of leaving orphaned records
 - Rapidly adding exercises no longer produces duplicate order indices due to a race condition
 - Loading a workout to run it now reads the workout and its exercises atomically
+- The JSON export now shows an error instead of "Workouts exported" when the file could not be written
+- The JSON import/export no longer read or write the file on the main thread
 
 ## [1.3.0] - 2026-09-25
 
