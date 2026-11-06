@@ -78,7 +78,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val dao = (application as WorkoutApplication).database.workoutDao()
-        val vibrator = getSystemService(VibratorManager::class.java).defaultVibrator
+        // Application context: the lambda is retained by ActiveWorkoutViewModel, which outlives this Activity.
+        val vibrator = applicationContext.getSystemService(VibratorManager::class.java).defaultVibrator
         val onVibrate = {
             vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
         }
