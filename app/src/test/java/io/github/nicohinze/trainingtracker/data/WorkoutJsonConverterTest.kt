@@ -205,6 +205,44 @@ class WorkoutJsonConverterTest {
         WorkoutJsonConverter.fromJson("""{"data": []}""")
     }
 
+    private fun singleExerciseJson(sets: Int = 3, amount: Int = 10, pauseSeconds: Int = 60, name: String = "Ex") =
+        """
+        {"workouts": [{"name": "W", "exercises": [
+          {"name": "$name", "sets": $sets, "amount": $amount, "pauseSeconds": $pauseSeconds, "orderIndex": 0}
+        ]}]}
+        """.trimIndent()
+
+    @Test(expected = IllegalArgumentException::class)
+    fun fromJson_zeroSets_throws() {
+        WorkoutJsonConverter.fromJson(singleExerciseJson(sets = 0))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun fromJson_negativeAmount_throws() {
+        WorkoutJsonConverter.fromJson(singleExerciseJson(amount = -5))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun fromJson_negativePause_throws() {
+        WorkoutJsonConverter.fromJson(singleExerciseJson(pauseSeconds = -1))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun fromJson_blankExerciseName_throws() {
+        WorkoutJsonConverter.fromJson(singleExerciseJson(name = " "))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun fromJson_blankWorkoutName_throws() {
+        WorkoutJsonConverter.fromJson("""{"workouts": [{"name": ""}]}""")
+    }
+
+    @Test
+    fun fromJson_zeroPause_isAccepted() {
+        val result = WorkoutJsonConverter.fromJson(singleExerciseJson(pauseSeconds = 0))
+        assertEquals(0, result[0].exercises[0].pauseSeconds)
+    }
+
     @Test
     fun fromJson_parsedExercisesHaveZeroWorkoutId() {
         val json =
