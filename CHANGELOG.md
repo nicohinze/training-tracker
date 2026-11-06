@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The JSON export now shows an error instead of "Workouts exported" when the file could not be written
 - The JSON import/export no longer read or write the file on the main thread
 - The JSON import now rejects files with blank names, non-positive sets or amounts, or negative pauses or durations
+- The rest timer vibration no longer leaks the activity, e.g. after a screen rotation during an active workout
 
 ## [1.3.0] - 2026-09-25
 
