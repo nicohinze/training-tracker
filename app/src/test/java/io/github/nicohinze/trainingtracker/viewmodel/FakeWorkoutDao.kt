@@ -5,6 +5,7 @@ import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutCompletion
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import io.github.nicohinze.trainingtracker.data.WorkoutWithDetails
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -12,6 +13,9 @@ class FakeWorkoutDao : WorkoutDao {
     val workouts = mutableListOf<Workout>()
     val exercises = mutableListOf<Exercise>()
     val completions = mutableListOf<WorkoutCompletion>()
+
+    /** When set, [insertCompletion] suspends until it is completed, to simulate a slow database write */
+    var completionGate: CompletableDeferred<Unit>? = null
 
     private val workoutsFlow = MutableStateFlow<List<Workout>>(emptyList())
     private val completionsFlow = MutableStateFlow<List<WorkoutCompletion>>(emptyList())
@@ -100,6 +104,7 @@ class FakeWorkoutDao : WorkoutDao {
     }
 
     override suspend fun insertCompletion(completion: WorkoutCompletion) {
+        completionGate?.await()
         val id = if (completion.id == 0L) nextCompletionId++ else completion.id
         completions.add(completion.copy(id = id))
         completionsFlow.value = completions.toList()

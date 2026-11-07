@@ -11,10 +11,12 @@ import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 import kotlin.time.Duration.Companion.milliseconds
@@ -190,7 +192,10 @@ class ActiveWorkoutViewModel(
             val finalElapsed = currentElapsedSeconds()
             ui = updated.copy(state = ActiveState.FINISHED, elapsedSeconds = finalElapsed)
             viewModelScope.launch {
-                dao.completeWorkout(workoutId, finalElapsed)
+                // Leaving the screen right away clears the ViewModel, which must not cancel this write
+                withContext(NonCancellable) {
+                    dao.completeWorkout(workoutId, finalElapsed)
+                }
             }
             return
         }
