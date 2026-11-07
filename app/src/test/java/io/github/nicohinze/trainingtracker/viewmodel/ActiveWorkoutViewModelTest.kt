@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -236,6 +237,22 @@ class ActiveWorkoutViewModelTest {
         vm.onSetFinished()
         assertEquals(1, dao.completions.size)
         assertEquals(1L, dao.completions[0].workoutId)
+    }
+
+    @Test
+    fun onSetFinished_lastSetOfLastExercise_recordsCompletionEvenIfScreenIsLeftImmediately() = runVmTest {
+        seedStandardWorkout(
+            Exercise(id = 1, workoutId = 1, name = "Only", sets = 1, amount = 10, pauseSeconds = 60, orderIndex = 0),
+        )
+        val gate = CompletableDeferred<Unit>()
+        dao.completionGate = gate
+        val vm = createVm()
+        vm.startWorkout()
+        vm.onSetFinished()
+        // Leaving the screen clears the ViewModel while the write is still in progress
+        vm.viewModelScope.cancel()
+        gate.complete(Unit)
+        assertEquals(1, dao.completions.size)
     }
 
     @Test
