@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,7 +49,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -405,52 +408,46 @@ internal fun FinishedContent(
     }
 }
 
+private const val INDEX_COLUMN_WEIGHT = 0.5f
+private const val NAME_COLUMN_WEIGHT = 2f
+private const val SETS_COLUMN_WEIGHT = 0.7f
+private const val AMOUNT_COLUMN_WEIGHT = 0.7f
+private const val PAUSE_COLUMN_WEIGHT = 0.8f
+
+@Composable
+private fun RowScope.TableCell(
+    text: String,
+    weight: Float,
+    style: TextStyle,
+    color: Color,
+    fontWeight: FontWeight? = null,
+    textAlign: TextAlign? = null,
+) {
+    Text(
+        text,
+        modifier = Modifier.weight(weight),
+        style = style,
+        fontWeight = fontWeight,
+        textAlign = textAlign,
+        color = color,
+    )
+}
+
 @Composable
 private fun TableHeader() {
+    val style = MaterialTheme.typography.labelMedium
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "#",
-            modifier = Modifier.weight(0.5f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "Exercise",
-            modifier = Modifier.weight(2f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "Sets",
-            modifier = Modifier.weight(0.7f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "Reps/Seconds",
-            modifier = Modifier.weight(0.7f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            "Pause",
-            modifier = Modifier.weight(0.8f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        TableCell("#", INDEX_COLUMN_WEIGHT, style, color, FontWeight.Bold)
+        TableCell("Exercise", NAME_COLUMN_WEIGHT, style, color, FontWeight.Bold)
+        TableCell("Sets", SETS_COLUMN_WEIGHT, style, color, FontWeight.Bold, TextAlign.Center)
+        TableCell("Reps/Seconds", AMOUNT_COLUMN_WEIGHT, style, color, FontWeight.Bold, TextAlign.Center)
+        TableCell("Pause", PAUSE_COLUMN_WEIGHT, style, color, FontWeight.Bold, TextAlign.Center)
     }
     HorizontalDivider()
 }
@@ -478,50 +475,41 @@ private fun ExerciseRow(
     } else {
         MaterialTheme.colorScheme.onSurface
     }
+    val style = MaterialTheme.typography.bodyMedium
+    val name = if (exercise.intensity.isNullOrBlank()) {
+        exercise.name
+    } else {
+        "${exercise.name} @ ${exercise.intensity}"
+    }
+    val amount = if (exercise.type == ExerciseType.SECONDS) "${exercise.amount} s" else "${exercise.amount}"
 
     Row(
         modifier = rowModifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        TableCell(
             "${index + 1}",
-            modifier = Modifier.weight(0.5f),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (highlighted) contentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+            INDEX_COLUMN_WEIGHT,
+            style,
+            if (highlighted) contentColor else MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            if (exercise.intensity.isNullOrBlank()) {
-                exercise.name
-            } else {
-                "${exercise.name} @ ${exercise.intensity}"
-            },
-            modifier = Modifier.weight(2f),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Medium,
-            color = contentColor,
+        TableCell(
+            name,
+            NAME_COLUMN_WEIGHT,
+            style,
+            contentColor,
+            if (highlighted) FontWeight.Bold else FontWeight.Medium,
         )
-        Text(
+        TableCell(
             setsDisplay,
-            modifier = Modifier.weight(0.7f),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (highlighted) FontWeight.Bold else FontWeight.Normal,
-            textAlign = TextAlign.Center,
-            color = contentColor,
+            SETS_COLUMN_WEIGHT,
+            style,
+            contentColor,
+            if (highlighted) FontWeight.Bold else FontWeight.Normal,
+            TextAlign.Center,
         )
-        Text(
-            if (exercise.type == ExerciseType.SECONDS) "${exercise.amount} s" else "${exercise.amount}",
-            modifier = Modifier.weight(0.7f),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = contentColor,
-        )
-        Text(
-            "${exercise.pauseSeconds} s",
-            modifier = Modifier.weight(0.8f),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = contentColor,
-        )
+        TableCell(amount, AMOUNT_COLUMN_WEIGHT, style, contentColor, textAlign = TextAlign.Center)
+        TableCell("${exercise.pauseSeconds} s", PAUSE_COLUMN_WEIGHT, style, contentColor, textAlign = TextAlign.Center)
     }
 }
 
