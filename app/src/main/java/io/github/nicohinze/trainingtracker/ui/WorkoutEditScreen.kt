@@ -290,7 +290,11 @@ private fun ExerciseDialog(
                         pause.toIntOrNull() ?: 0,
                     )
                 },
-                enabled = name.isNotBlank() && (sets.toIntOrNull() ?: 0) > 0 && (amount.toIntOrNull() ?: 0) > 0,
+                // A blank pause means no rest, but one too large for an Int must not silently become 0
+                enabled = name.isNotBlank() &&
+                    (sets.toIntOrNull() ?: 0) > 0 &&
+                    (amount.toIntOrNull() ?: 0) > 0 &&
+                    (pause.isEmpty() || pause.toIntOrNull() != null),
             ) {
                 Text("Save")
             }
