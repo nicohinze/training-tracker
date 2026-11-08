@@ -12,11 +12,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import io.github.nicohinze.trainingtracker.ui.AboutScreen
 import io.github.nicohinze.trainingtracker.ui.ActiveWorkoutScreen
@@ -33,38 +31,32 @@ private const val VIBRATION_DURATION_MS = 100L
 
 @Composable
 private fun AppNavHost(navController: NavHostController, dao: WorkoutDao, onVibrate: () -> Unit) {
-    NavHost(navController = navController, startDestination = "workouts") {
-        composable("workouts") {
+    NavHost(navController = navController, startDestination = WorkoutListRoute) {
+        composable<WorkoutListRoute> {
             WorkoutListScreen(
-                onEditWorkout = { id -> navController.navigate("edit/$id") },
-                onStartWorkout = { id -> navController.navigate("active/$id") },
-                onAbout = { navController.navigate("about") },
-                onActivity = { navController.navigate("activity_graph") },
+                onEditWorkout = { id -> navController.navigate(WorkoutEditRoute(id)) },
+                onStartWorkout = { id -> navController.navigate(ActiveWorkoutRoute(id)) },
+                onAbout = { navController.navigate(AboutRoute) },
+                onActivity = { navController.navigate(ActivityGraphRoute) },
                 factory = WorkoutListViewModel.factory(dao),
             )
         }
-        composable("about") {
+        composable<AboutRoute> {
             AboutScreen(onBack = { navController.popBackStack() })
         }
-        composable("activity_graph") {
+        composable<ActivityGraphRoute> {
             ActivityGraphScreen(
                 onBack = { navController.popBackStack() },
                 factory = ActivityGraphViewModel.factory(dao),
             )
         }
-        composable(
-            "edit/{workoutId}",
-            arguments = listOf(navArgument("workoutId") { type = NavType.LongType }),
-        ) {
+        composable<WorkoutEditRoute> {
             WorkoutEditScreen(
                 onBack = { navController.popBackStack() },
                 factory = WorkoutEditViewModel.factory(dao),
             )
         }
-        composable(
-            "active/{workoutId}",
-            arguments = listOf(navArgument("workoutId") { type = NavType.LongType }),
-        ) {
+        composable<ActiveWorkoutRoute> {
             ActiveWorkoutScreen(
                 onBack = { navController.popBackStack() },
                 factory = ActiveWorkoutViewModel.factory(dao, onVibrate),

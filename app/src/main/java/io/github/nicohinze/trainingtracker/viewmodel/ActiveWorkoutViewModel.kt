@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import io.github.nicohinze.trainingtracker.ActiveWorkoutRoute
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
@@ -77,7 +78,7 @@ class ActiveWorkoutViewModel(
     private val onVibrate: () -> Unit = {},
     private val clock: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
-    private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>("workoutId")) {
+    private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>(ActiveWorkoutRoute::workoutId.name)) {
         "workoutId nav argument is required for ActiveWorkoutViewModel"
     }
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
