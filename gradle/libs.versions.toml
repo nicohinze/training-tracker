@@ -52,6 +52,7 @@ ben-manes-versions = { id = "io.github.ben-manes.versions", version.ref = "benMa
 compose-screenshot = { id = "com.android.compose.screenshot", version.ref = "composeScreenshot" }
 detekt-plugin = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint-plugin = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 room = { id = "androidx.room", version.ref = "roomKtx" }
