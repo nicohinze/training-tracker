@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The rest timer no longer drifts and keeps counting correctly while the app is in the background
 - Exercises can no longer be saved with a rest that is too large, which was silently saved as no rest
 - A finished workout is now always recorded, even when the screen is left immediately after the last set
+- A database can no longer be created twice when it is first accessed from multiple threads at once
 
 ## [1.3.0] - 2026-09-25
 
