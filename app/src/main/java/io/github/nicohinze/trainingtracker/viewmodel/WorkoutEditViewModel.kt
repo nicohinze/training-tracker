@@ -2,10 +2,10 @@ package io.github.nicohinze.trainingtracker.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.nicohinze.trainingtracker.WorkoutEditRoute
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.ExerciseType
@@ -101,12 +101,8 @@ class WorkoutEditViewModel(
     }
 
     companion object {
-        fun factory(dao: WorkoutDao) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: Class<T>,
-                extras: CreationExtras,
-            ): T = WorkoutEditViewModel(dao, extras.createSavedStateHandle()) as T
+        fun factory(dao: WorkoutDao) = viewModelFactory {
+            initializer { WorkoutEditViewModel(dao, createSavedStateHandle()) }
         }
     }
 }

@@ -3,10 +3,10 @@ package io.github.nicohinze.trainingtracker.viewmodel
 import android.os.SystemClock
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.nicohinze.trainingtracker.ActiveWorkoutRoute
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
@@ -340,12 +340,8 @@ class ActiveWorkoutViewModel(
     }
 
     companion object {
-        fun factory(dao: WorkoutDao, onVibrate: () -> Unit) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: Class<T>,
-                extras: CreationExtras,
-            ): T = ActiveWorkoutViewModel(dao, extras.createSavedStateHandle(), onVibrate) as T
+        fun factory(dao: WorkoutDao, onVibrate: () -> Unit) = viewModelFactory {
+            initializer { ActiveWorkoutViewModel(dao, createSavedStateHandle(), onVibrate) }
         }
     }
 }
