@@ -1,8 +1,9 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import io.github.nicohinze.trainingtracker.data.WorkoutJsonConverter
@@ -57,9 +58,8 @@ class WorkoutListViewModel(
     }
 
     companion object {
-        fun factory(dao: WorkoutDao) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = WorkoutListViewModel(dao) as T
+        fun factory(dao: WorkoutDao) = viewModelFactory {
+            initializer { WorkoutListViewModel(dao) }
         }
     }
 }
