@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exercises can no longer be saved with a rest that is too large, which was silently saved as no rest
 - A finished workout is now always recorded, even when the screen is left immediately after the last set
 - A database can no longer be created twice when it is first accessed from multiple threads at once
+- The JSON import/export is no longer cancelled and its result message no longer lost when the screen is rotated
 
 ## [1.3.0] - 2026-09-25
 
