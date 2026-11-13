@@ -1,6 +1,6 @@
 package io.github.nicohinze.trainingtracker.ui
 
-import android.content.Context
+import android.content.ContentResolver
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,12 +47,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,9 +69,6 @@ import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.formatDuration
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.IOException
 
 @Composable
@@ -85,44 +82,27 @@ fun WorkoutListScreen(
 ) {
     val workouts by viewModel.workouts.collectAsState()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    // Application-scoped, because the lambdas below are run in viewModelScope and may outlive this activity.
+    val contentResolver = context.applicationContext.contentResolver
+
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri: Uri? ->
         uri ?: return@rememberLauncherForActivityResult
-        scope.launch {
-            try {
-                val json = withContext(Dispatchers.IO) { readJsonFromUri(context, uri) }
-                viewModel
-                    .importJson(json)
-                    .onSuccess { count ->
-                        Toast.makeText(context, "Imported $count workout(s)", Toast.LENGTH_SHORT).show()
-                    }.onFailure {
-                        Toast.makeText(context, "Import failed: invalid file", Toast.LENGTH_SHORT).show()
-                    }
-            } catch (_: Exception) {
-                Toast.makeText(context, "Import failed: could not read file", Toast.LENGTH_SHORT).show()
-            }
-        }
+        viewModel.importWorkouts { readJsonFromUri(contentResolver, uri) }
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri: Uri? ->
         uri ?: return@rememberLauncherForActivityResult
-        scope.launch {
-            val json = viewModel.exportJson()
-            val message = try {
-                withContext(Dispatchers.IO) { writeJsonToUri(context, uri, json) }
-                "Workouts exported"
-            } catch (_: IOException) {
-                "Export failed: could not write file"
-            } catch (_: SecurityException) {
-                "Export failed: no permission to write file"
-            }
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
+        viewModel.exportWorkouts { json -> writeJsonToUri(contentResolver, uri, json) }
     }
 
     WorkoutListContent(
@@ -140,14 +120,14 @@ fun WorkoutListScreen(
     )
 }
 
-private fun readJsonFromUri(context: Context, uri: Uri): String {
-    val stream = context.contentResolver.openInputStream(uri)
-        ?: throw IllegalArgumentException("Could not open file")
+private fun readJsonFromUri(contentResolver: ContentResolver, uri: Uri): String {
+    val stream = contentResolver.openInputStream(uri)
+        ?: throw IOException("Could not open file")
     return stream.use { it.bufferedReader().readText() }
 }
 
-private fun writeJsonToUri(context: Context, uri: Uri, json: String) {
-    val stream = context.contentResolver.openOutputStream(uri)
+private fun writeJsonToUri(contentResolver: ContentResolver, uri: Uri, json: String) {
+    val stream = contentResolver.openOutputStream(uri)
         ?: throw IOException("Could not open file for writing")
     stream.use { it.write(json.toByteArray()) }
 }
