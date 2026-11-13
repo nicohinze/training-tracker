@@ -206,26 +206,14 @@ class ActiveWorkoutViewModel(
             }
             return
         }
-        if (updated.isLastSetOfExercise) {
-            val nextIndex = updated.currentExerciseIndex + 1
-            val currentExercise = updated.currentExercise!!
-            startRest(
-                pauseSeconds = currentExercise.pauseSeconds,
-                restExerciseIndex = updated.currentExerciseIndex,
-                restSet = newCompleted,
-                nextExerciseIndex = nextIndex,
-                nextSet = 0,
-            )
-        } else {
-            val exercise = updated.currentExercise!!
-            startRest(
-                pauseSeconds = exercise.pauseSeconds,
-                restExerciseIndex = updated.currentExerciseIndex,
-                restSet = newCompleted,
-                nextExerciseIndex = updated.currentExerciseIndex,
-                nextSet = newCompleted,
-            )
-        }
+        val exerciseDone = updated.isLastSetOfExercise
+        startRest(
+            pauseSeconds = updated.currentExercise!!.pauseSeconds,
+            restExerciseIndex = updated.currentExerciseIndex,
+            restSet = newCompleted,
+            nextExerciseIndex = if (exerciseDone) updated.currentExerciseIndex + 1 else updated.currentExerciseIndex,
+            nextSet = if (exerciseDone) 0 else newCompleted,
+        )
     }
 
     private fun startRest(
