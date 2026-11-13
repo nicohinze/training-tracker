@@ -93,9 +93,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    val isActive = uiState.state == ActiveState.EXERCISING ||
-        uiState.state == ActiveState.RESTING ||
-        uiState.state == ActiveState.PAUSED
+    val isActive = uiState.isInProgress
     var showQuitDialog by rememberSaveable { mutableStateOf(false) }
     BackHandler {
         if (isActive) {
