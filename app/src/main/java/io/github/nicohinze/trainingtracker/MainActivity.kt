@@ -16,12 +16,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
+import io.github.nicohinze.trainingtracker.service.ActiveWorkoutService
 import io.github.nicohinze.trainingtracker.ui.AboutScreen
 import io.github.nicohinze.trainingtracker.ui.ActiveWorkoutScreen
 import io.github.nicohinze.trainingtracker.ui.ActivityGraphScreen
 import io.github.nicohinze.trainingtracker.ui.WorkoutEditScreen
 import io.github.nicohinze.trainingtracker.ui.WorkoutListScreen
 import io.github.nicohinze.trainingtracker.ui.theme.TrainingTrackerTheme
+import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutUiState
 import io.github.nicohinze.trainingtracker.viewmodel.ActiveWorkoutViewModel
 import io.github.nicohinze.trainingtracker.viewmodel.ActivityGraphViewModel
 import io.github.nicohinze.trainingtracker.viewmodel.WorkoutEditViewModel
@@ -30,7 +32,12 @@ import io.github.nicohinze.trainingtracker.viewmodel.WorkoutListViewModel
 private const val VIBRATION_DURATION_MS = 100L
 
 @Composable
-private fun AppNavHost(navController: NavHostController, dao: WorkoutDao, onVibrate: () -> Unit) {
+private fun AppNavHost(
+    navController: NavHostController,
+    dao: WorkoutDao,
+    onVibrate: () -> Unit,
+    onSessionChanged: (ActiveWorkoutUiState?) -> Unit,
+) {
     NavHost(navController = navController, startDestination = WorkoutListRoute) {
         composable<WorkoutListRoute> {
             WorkoutListScreen(
@@ -59,7 +66,7 @@ private fun AppNavHost(navController: NavHostController, dao: WorkoutDao, onVibr
         composable<ActiveWorkoutRoute> {
             ActiveWorkoutScreen(
                 onBack = { navController.popBackStack() },
-                factory = ActiveWorkoutViewModel.factory(dao, onVibrate),
+                factory = ActiveWorkoutViewModel.factory(dao, onVibrate, onSessionChanged),
             )
         }
     }
@@ -75,6 +82,8 @@ class MainActivity : ComponentActivity() {
         val onVibrate = {
             vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_DURATION_MS, VibrationEffect.DEFAULT_AMPLITUDE))
         }
+        val appContext = applicationContext
+        val onSessionChanged = { state: ActiveWorkoutUiState? -> ActiveWorkoutService.update(appContext, state) }
         setContent {
             TrainingTrackerTheme {
                 Surface(
@@ -82,7 +91,12 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val navController = rememberNavController()
-                    AppNavHost(navController = navController, dao = dao, onVibrate = onVibrate)
+                    AppNavHost(
+                        navController = navController,
+                        dao = dao,
+                        onVibrate = onVibrate,
+                        onSessionChanged = onSessionChanged,
+                    )
                 }
             }
         }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The rest timer keeps running in the background, and an active workout is shown in a notification with the remaining rest
+
 ### Fixed
 
 - Reset all stats now also clears completion history instead of leaving orphaned records

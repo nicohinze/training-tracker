@@ -50,6 +50,8 @@ data class ActiveWorkoutUiState(
     val totalSets: Int get() = currentExercise?.sets ?: 0
     val isLastSetOfExercise: Boolean get() = completedSets >= totalSets
     val isLastExercise: Boolean get() = currentExerciseIndex >= exercises.size - 1
+    val isInProgress: Boolean
+        get() = state == ActiveState.EXERCISING || state == ActiveState.RESTING || state == ActiveState.PAUSED
 }
 
 private const val VIBRATION_COUNTDOWN_THRESHOLD = 3
@@ -76,6 +78,8 @@ class ActiveWorkoutViewModel(
     private val dao: WorkoutDao,
     private val savedStateHandle: SavedStateHandle,
     private val onVibrate: () -> Unit = {},
+    // Called with every state change, and with null once the ViewModel is cleared.
+    private val onSessionChanged: (ActiveWorkoutUiState?) -> Unit = {},
     private val clock: () -> Long = SystemClock::elapsedRealtime,
 ) : ViewModel() {
     private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>(ActiveWorkoutRoute::workoutId.name)) {
@@ -90,6 +94,7 @@ class ActiveWorkoutViewModel(
         set(value) {
             _uiState.value = value
             saveSession(value)
+            onSessionChanged(value)
         }
 
     private var timerJob: Job? = null
@@ -102,6 +107,7 @@ class ActiveWorkoutViewModel(
     private var restRemainingOnPause by saved(KEY_REST_REMAINING_ON_PAUSE, 0)
 
     init {
+        addCloseable { onSessionChanged(null) }
         viewModelScope.launch {
             val details = dao.getWorkoutWithExercises(workoutId)
             val loaded = ActiveWorkoutUiState(
@@ -340,8 +346,19 @@ class ActiveWorkoutViewModel(
     }
 
     companion object {
-        fun factory(dao: WorkoutDao, onVibrate: () -> Unit) = viewModelFactory {
-            initializer { ActiveWorkoutViewModel(dao, createSavedStateHandle(), onVibrate) }
+        fun factory(
+            dao: WorkoutDao,
+            onVibrate: () -> Unit,
+            onSessionChanged: (ActiveWorkoutUiState?) -> Unit,
+        ) = viewModelFactory {
+            initializer {
+                ActiveWorkoutViewModel(
+                    dao,
+                    createSavedStateHandle(),
+                    onVibrate = onVibrate,
+                    onSessionChanged = onSessionChanged,
+                )
+            }
         }
     }
 }

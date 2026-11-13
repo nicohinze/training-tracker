@@ -1,7 +1,11 @@
 package io.github.nicohinze.trainingtracker.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -50,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -78,6 +83,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
     val view = LocalView.current
     DisposableEffect(Unit) {
         val window = (view.context as? android.app.Activity)?.window
@@ -130,7 +136,10 @@ fun ActiveWorkoutScreen(
                     ActiveState.READY -> {
                         ReadyContent(
                             exercises = uiState.exercises,
-                            onStart = { viewModel.startWorkout() },
+                            onStart = {
+                                requestNotificationPermission()
+                                viewModel.startWorkout()
+                            },
                         )
                     }
 
@@ -187,6 +196,19 @@ fun ActiveWorkoutScreen(
                     }
                 },
             )
+        }
+    }
+}
+
+/** For the rest timer notification; the workout runs the same if it is denied. */
+@Composable
+private fun rememberNotificationPermissionRequest(): () -> Unit {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    return {
+        val permission = Manifest.permission.POST_NOTIFICATIONS
+        if (context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+            launcher.launch(permission)
         }
     }
 }

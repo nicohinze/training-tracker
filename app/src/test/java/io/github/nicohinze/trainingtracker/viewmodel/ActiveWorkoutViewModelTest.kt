@@ -1,7 +1,11 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.Workout
 import kotlinx.coroutines.CompletableDeferred
@@ -389,5 +393,27 @@ class ActiveWorkoutViewModelTest {
         val vm = createVm()
         assertEquals("First", vm.uiState.value.exercises[0].name)
         assertEquals("Second", vm.uiState.value.exercises[1].name)
+    }
+
+    @Test
+    fun sessionChanges_areReportedAndEndWithNullWhenViewModelIsCleared() = runVmTest {
+        twoExerciseWorkout()
+        val sessions = mutableListOf<ActiveWorkoutUiState?>()
+        val store = ViewModelStore()
+        val factory = viewModelFactory {
+            initializer {
+                ActiveWorkoutViewModel(
+                    dao,
+                    SavedStateHandle(mapOf("workoutId" to 1L)),
+                    onSessionChanged = { sessions += it },
+                    clock = { testDispatcher.scheduler.currentTime },
+                )
+            }
+        }
+        val vm = ViewModelProvider.create(store, factory)[ActiveWorkoutViewModel::class]
+        vm.startWorkout()
+        assertEquals(ActiveState.EXERCISING, sessions.last()?.state)
+        store.clear()
+        assertNull(sessions.last())
     }
 }

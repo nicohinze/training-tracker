@@ -24,6 +24,7 @@ An Android app for creating and running workouts with a set-tracking rest timer.
 - Run workouts with an interactive timer that tracks sets and rest periods
 - Total run-time display for active workouts
 - Screen stays on during active workouts
+- Rest timer keeps running in the background, with an ongoing notification showing the remaining rest
 - Activity graph showing workout completion history over time
 - Import and export workouts as JSON (including exercises and completion history)
 
