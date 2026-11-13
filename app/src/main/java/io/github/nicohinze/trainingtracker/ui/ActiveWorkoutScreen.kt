@@ -48,7 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -96,7 +96,7 @@ fun ActiveWorkoutScreen(
     val isActive = uiState.state == ActiveState.EXERCISING ||
         uiState.state == ActiveState.RESTING ||
         uiState.state == ActiveState.PAUSED
-    var showQuitDialog by remember { mutableStateOf(false) }
+    var showQuitDialog by rememberSaveable { mutableStateOf(false) }
     BackHandler {
         if (isActive) {
             showQuitDialog = true

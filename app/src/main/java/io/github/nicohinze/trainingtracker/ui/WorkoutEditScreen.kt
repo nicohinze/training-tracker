@@ -38,7 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,9 +86,12 @@ internal fun WorkoutEditContent(
     onDeleteExercise: (Exercise) -> Unit,
     onMoveExercise: (Int, Int) -> Unit,
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
-    var editingExercise by remember { mutableStateOf<Exercise?>(null) }
-    var exerciseToDelete by remember { mutableStateOf<Exercise?>(null) }
+    // Saveable, so open dialogs survive configuration changes. Exercise isn't Parcelable, so ids are saved.
+    var showAddDialog by rememberSaveable { mutableStateOf(false) }
+    var editingExerciseId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var exerciseToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editingExercise = exercises.find { it.id == editingExerciseId }
+    val exerciseToDelete = exercises.find { it.id == exerciseToDeleteId }
 
     Scaffold(
         topBar = {
@@ -119,8 +122,8 @@ internal fun WorkoutEditContent(
                     canMoveDown = index < exercises.size - 1,
                     onMoveUp = { onMoveExercise(index, index - 1) },
                     onMoveDown = { onMoveExercise(index, index + 1) },
-                    onEdit = { editingExercise = exercise },
-                    onDelete = { exerciseToDelete = exercise },
+                    onEdit = { editingExerciseId = exercise.id },
+                    onDelete = { exerciseToDeleteId = exercise.id },
                 )
             }
         }
@@ -143,28 +146,28 @@ internal fun WorkoutEditContent(
                 initialType = exercise.type,
                 initialIntensity = exercise.intensity.orEmpty(),
                 initialPause = exercise.pauseSeconds,
-                onDismiss = { editingExercise = null },
+                onDismiss = { editingExerciseId = null },
                 onConfirm = { name, sets, amount, type, intensity, pause ->
                     onUpdateExercise(exercise, name, sets, amount, type, intensity, pause)
-                    editingExercise = null
+                    editingExerciseId = null
                 },
             )
         }
         exerciseToDelete?.let { exercise ->
             AlertDialog(
-                onDismissRequest = { exerciseToDelete = null },
+                onDismissRequest = { exerciseToDeleteId = null },
                 title = { Text("Delete Exercise") },
                 text = { Text("Delete \"${exercise.name}\"? This cannot be undone.") },
                 confirmButton = {
                     TextButton(onClick = {
                         onDeleteExercise(exercise)
-                        exerciseToDelete = null
+                        exerciseToDeleteId = null
                     }) {
                         Text("Delete")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { exerciseToDelete = null }) {
+                    TextButton(onClick = { exerciseToDeleteId = null }) {
                         Text("Cancel")
                     }
                 },
@@ -252,12 +255,12 @@ private fun ExerciseDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, Int, Int, ExerciseType, String?, Int) -> Unit,
 ) {
-    var name by remember { mutableStateOf(initialName) }
-    var sets by remember { mutableStateOf(initialSets.toString()) }
-    var amount by remember { mutableStateOf(initialAmount.toString()) }
-    var type by remember { mutableStateOf(initialType) }
-    var intensity by remember { mutableStateOf(initialIntensity) }
-    var pause by remember { mutableStateOf(initialPause.toString()) }
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    var sets by rememberSaveable { mutableStateOf(initialSets.toString()) }
+    var amount by rememberSaveable { mutableStateOf(initialAmount.toString()) }
+    var type by rememberSaveable { mutableStateOf(initialType) }
+    var intensity by rememberSaveable { mutableStateOf(initialIntensity) }
+    var pause by rememberSaveable { mutableStateOf(initialPause.toString()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

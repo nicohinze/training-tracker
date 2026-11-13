@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -147,11 +148,14 @@ internal fun WorkoutListContent(
     onAbout: () -> Unit = {},
     onActivity: () -> Unit = {},
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
+    // Saveable, so open dialogs survive configuration changes. Workout isn't Parcelable, so ids are saved.
+    var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var showImportExportMenu by remember { mutableStateOf(false) }
-    var showResetStatsDialog by remember { mutableStateOf(false) }
-    var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
-    var workoutToEdit by remember { mutableStateOf<Workout?>(null) }
+    var showResetStatsDialog by rememberSaveable { mutableStateOf(false) }
+    var workoutToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var workoutToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val workoutToDelete = workouts.find { it.id == workoutToDeleteId }
+    val workoutToEdit = workouts.find { it.id == workoutToEditId }
 
     val totalRuntime = workouts.sumOf { it.totalDurationSeconds }
 
@@ -241,8 +245,8 @@ internal fun WorkoutListContent(
                             workout = workout,
                             onEdit = { onEditWorkout(workout.id) },
                             onStart = { onStartWorkout(workout.id) },
-                            onDelete = { workoutToDelete = workout },
-                            onRename = { workoutToEdit = workout },
+                            onDelete = { workoutToDeleteId = workout.id },
+                            onRename = { workoutToEditId = workout.id },
                         )
                     }
                 }
@@ -269,28 +273,28 @@ internal fun WorkoutListContent(
                 initialColor = workout.color,
                 confirmLabel = "Save",
                 isConfirmEnabled = { name, color -> name != workout.name || color != workout.color },
-                onDismiss = { workoutToEdit = null },
+                onDismiss = { workoutToEditId = null },
                 onConfirm = { newName, newColor ->
                     onUpdateWorkout(workout, newName, newColor)
-                    workoutToEdit = null
+                    workoutToEditId = null
                 },
             )
         }
         workoutToDelete?.let { workout ->
             AlertDialog(
-                onDismissRequest = { workoutToDelete = null },
+                onDismissRequest = { workoutToDeleteId = null },
                 title = { Text("Delete Workout") },
                 text = { Text("Delete \"${workout.name}\"? This cannot be undone.") },
                 confirmButton = {
                     TextButton(onClick = {
                         onDeleteWorkout(workout)
-                        workoutToDelete = null
+                        workoutToDeleteId = null
                     }) {
                         Text("Delete")
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { workoutToDelete = null }) {
+                    TextButton(onClick = { workoutToDeleteId = null }) {
                         Text("Cancel")
                     }
                 },
@@ -396,8 +400,8 @@ private fun WorkoutDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, Int) -> Unit,
 ) {
-    var name by remember { mutableStateOf(initialName) }
-    var color by remember { mutableIntStateOf(initialColor) }
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    var color by rememberSaveable { mutableIntStateOf(initialColor) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
