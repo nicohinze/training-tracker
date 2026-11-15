@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.Exercise
 import io.github.nicohinze.trainingtracker.data.ExerciseType
@@ -58,8 +58,8 @@ fun WorkoutEditScreen(
     factory: ViewModelProvider.Factory? = null,
     viewModel: WorkoutEditViewModel = viewModel(factory = factory),
 ) {
-    val workout by viewModel.workout.collectAsState()
-    val exercises by viewModel.exercises.collectAsState()
+    val workout by viewModel.workout.collectAsStateWithLifecycle()
+    val exercises by viewModel.exercises.collectAsStateWithLifecycle()
     WorkoutEditContent(
         title = workout?.name ?: "Edit Workout",
         exercises = exercises,
