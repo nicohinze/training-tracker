@@ -48,7 +48,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +63,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.DEFAULT_WORKOUT_COLOR
 import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
@@ -81,7 +81,7 @@ fun WorkoutListScreen(
     factory: ViewModelProvider.Factory? = null,
     viewModel: WorkoutListViewModel = viewModel(factory = factory),
 ) {
-    val workouts by viewModel.workouts.collectAsState()
+    val workouts by viewModel.workouts.collectAsStateWithLifecycle()
     val context = LocalContext.current
     // Application-scoped, because the lambdas below are run in viewModelScope and may outlive this activity.
     val contentResolver = context.applicationContext.contentResolver

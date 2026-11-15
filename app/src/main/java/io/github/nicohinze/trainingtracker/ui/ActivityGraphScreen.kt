@@ -28,7 +28,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.nicohinze.trainingtracker.data.WORKOUT_COLORS
 import io.github.nicohinze.trainingtracker.data.Workout
@@ -67,7 +67,7 @@ fun ActivityGraphScreen(
     factory: ViewModelProvider.Factory? = null,
     viewModel: ActivityGraphViewModel = viewModel(factory = factory),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ActivityGraphContent(uiState = uiState, onBack = onBack)
 }
 
