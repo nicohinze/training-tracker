@@ -145,22 +145,6 @@ class WorkoutDaoTest {
     }
 
     @Test
-    fun getExerciseListForWorkout_returnsSuspendList() = runTest {
-        val workoutId = dao.insertWorkout(Workout(name = "Test"))
-        dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "A", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 0),
-        )
-        dao.insertExercise(
-            Exercise(workoutId = workoutId, name = "B", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 1),
-        )
-
-        val list = dao.getExerciseListForWorkout(workoutId)
-        assertEquals(2, list.size)
-        assertEquals("A", list[0].name)
-        assertEquals("B", list[1].name)
-    }
-
-    @Test
     fun updateExercise() = runTest {
         val workoutId = dao.insertWorkout(Workout(name = "Test"))
         val exId = dao.insertExercise(
@@ -248,7 +232,7 @@ class WorkoutDaoTest {
             Exercise(workoutId = workoutId, name = "C", sets = 1, amount = 1, pauseSeconds = 0, orderIndex = 2),
         )
 
-        val original = dao.getExerciseListForWorkout(workoutId)
+        val original = dao.getExercisesForWorkout(workoutId).first()
         val reordered = listOf(original[2], original[0], original[1])
         dao.reorderExercises(reordered)
 
