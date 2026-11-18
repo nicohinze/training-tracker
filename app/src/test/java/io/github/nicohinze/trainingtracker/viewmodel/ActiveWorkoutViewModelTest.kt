@@ -28,6 +28,8 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val FIXED_NOW = 1_700_000_000_000L
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActiveWorkoutViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -54,6 +56,7 @@ class ActiveWorkoutViewModelTest {
         handle,
         onVibrate = { vibrations++ },
         clock = { testDispatcher.scheduler.currentTime },
+        wallClock = { FIXED_NOW },
     ).also { createdVms += it }
 
     // Simulates process death: the old ViewModel's coroutines die, a new one is built from the same saved state.
@@ -241,6 +244,7 @@ class ActiveWorkoutViewModelTest {
         vm.onSetFinished()
         assertEquals(1, dao.completions.size)
         assertEquals(1L, dao.completions[0].workoutId)
+        assertEquals(FIXED_NOW, dao.completions[0].completedAt)
     }
 
     @Test

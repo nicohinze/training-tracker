@@ -51,12 +51,12 @@ interface WorkoutDao {
     suspend fun insertCompletion(completion: WorkoutCompletion)
 
     @Transaction
-    suspend fun completeWorkout(workoutId: Long, durationSeconds: Long) {
+    suspend fun completeWorkout(workoutId: Long, durationSeconds: Long, completedAt: Long) {
         updateWorkoutStats(workoutId, durationSeconds)
         insertCompletion(
             WorkoutCompletion(
                 workoutId = workoutId,
-                completedAt = System.currentTimeMillis(),
+                completedAt = completedAt,
                 durationSeconds = durationSeconds,
             ),
         )
