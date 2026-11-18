@@ -29,9 +29,6 @@ interface WorkoutDao {
     @Query("SELECT * FROM exercises WHERE workoutId = :workoutId ORDER BY orderIndex ASC")
     fun getExercisesForWorkout(workoutId: Long): Flow<List<Exercise>>
 
-    @Query("SELECT * FROM exercises WHERE workoutId = :workoutId ORDER BY orderIndex ASC")
-    suspend fun getExerciseListForWorkout(workoutId: Long): List<Exercise>
-
     @Insert
     suspend fun insertExercise(exercise: Exercise): Long
 

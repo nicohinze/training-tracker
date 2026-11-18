@@ -72,8 +72,6 @@ class FakeWorkoutDao : WorkoutDao {
 
     override fun getExercisesForWorkout(workoutId: Long): Flow<List<Exercise>> = exercisesFlowFor(workoutId)
 
-    override suspend fun getExerciseListForWorkout(workoutId: Long): List<Exercise> = sortedExercisesFor(workoutId)
-
     override suspend fun insertExercise(exercise: Exercise): Long {
         val id = if (exercise.id == 0L) nextExerciseId++ else exercise.id
         exercises.add(exercise.copy(id = id))
