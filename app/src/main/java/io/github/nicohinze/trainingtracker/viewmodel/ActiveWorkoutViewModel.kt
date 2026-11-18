@@ -81,6 +81,8 @@ class ActiveWorkoutViewModel(
     // Called with every state change, and with null once the ViewModel is cleared.
     private val onSessionChanged: (ActiveWorkoutUiState?) -> Unit = {},
     private val clock: () -> Long = SystemClock::elapsedRealtime,
+    // Wall-clock time for the completion timestamp; clock above is only meaningful for measuring durations.
+    private val wallClock: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
     private val workoutId: Long = checkNotNull(savedStateHandle.get<Long>(ActiveWorkoutRoute::workoutId.name)) {
         "workoutId nav argument is required for ActiveWorkoutViewModel"
@@ -197,11 +199,12 @@ class ActiveWorkoutViewModel(
         if (updated.isLastSetOfExercise && updated.isLastExercise) {
             elapsedJob?.cancel()
             val finalElapsed = currentElapsedSeconds()
+            val completedAt = wallClock()
             ui = updated.copy(state = ActiveState.FINISHED, elapsedSeconds = finalElapsed)
             viewModelScope.launch {
                 // Leaving the screen right away clears the ViewModel, which must not cancel this write
                 withContext(NonCancellable) {
-                    dao.completeWorkout(workoutId, finalElapsed)
+                    dao.completeWorkout(workoutId, finalElapsed, completedAt)
                 }
             }
             return

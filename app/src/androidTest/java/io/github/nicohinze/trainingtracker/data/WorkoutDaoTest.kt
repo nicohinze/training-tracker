@@ -83,16 +83,16 @@ class WorkoutDaoTest {
     @Test
     fun completeWorkout() = runTest {
         val id = dao.insertWorkout(Workout(name = "Test"))
-        dao.completeWorkout(id, 120)
-        dao.completeWorkout(id, 180)
-        dao.completeWorkout(id, 60)
+        dao.completeWorkout(id, 120, 1_000L)
+        dao.completeWorkout(id, 180, 2_000L)
+        dao.completeWorkout(id, 60, 3_000L)
 
         val workout = dao.getWorkout(id)!!
         assertEquals(3, workout.completionCount)
         assertEquals(360L, workout.totalDurationSeconds)
 
         val completions = dao.getCompletionsSince(0L).first()
-        assertEquals(3, completions.size)
+        assertEquals(listOf(1_000L, 2_000L, 3_000L), completions.map { it.completedAt })
     }
 
     @Test
@@ -270,9 +270,9 @@ class WorkoutDaoTest {
     fun resetAllStats_resetsCountAndDurationForAllWorkouts() = runTest {
         val id1 = dao.insertWorkout(Workout(name = "Push"))
         val id2 = dao.insertWorkout(Workout(name = "Pull"))
-        dao.completeWorkout(id1, 300)
-        dao.completeWorkout(id1, 200)
-        dao.completeWorkout(id2, 600)
+        dao.completeWorkout(id1, 300, 1_000L)
+        dao.completeWorkout(id1, 200, 2_000L)
+        dao.completeWorkout(id2, 600, 3_000L)
 
         dao.resetAllStats()
 
