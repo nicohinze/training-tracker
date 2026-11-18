@@ -17,6 +17,12 @@ class FakeWorkoutDao : WorkoutDao {
     /** When set, [insertCompletion] suspends until it is completed, to simulate a slow database write */
     var completionGate: CompletableDeferred<Unit>? = null
 
+    /** When set, [insertWorkout] throws it, to simulate a failing database write */
+    var insertWorkoutError: Throwable? = null
+
+    /** When set, [getAllWorkoutsWithExercisesAndCompletions] throws it, to simulate a failing database read */
+    var getAllWorkoutsError: Throwable? = null
+
     private val workoutsFlow = MutableStateFlow<List<Workout>>(emptyList())
     private val completionsFlow = MutableStateFlow<List<WorkoutCompletion>>(emptyList())
     private val exerciseFlows = mutableMapOf<Long, MutableStateFlow<List<Exercise>>>()
@@ -44,6 +50,7 @@ class FakeWorkoutDao : WorkoutDao {
     override suspend fun getWorkout(id: Long): Workout? = workouts.find { it.id == id }
 
     override suspend fun insertWorkout(workout: Workout): Long {
+        insertWorkoutError?.let { throw it }
         val id = if (workout.id == 0L) nextWorkoutId++ else workout.id
         workouts.add(workout.copy(id = id))
         workoutsFlow.value = workouts.toList()
@@ -132,14 +139,16 @@ class FakeWorkoutDao : WorkoutDao {
         return WorkoutWithDetails(workout, exs, comps)
     }
 
-    override suspend fun getAllWorkoutsWithExercisesAndCompletions(): List<WorkoutWithDetails> =
-        workouts.map { w ->
+    override suspend fun getAllWorkoutsWithExercisesAndCompletions(): List<WorkoutWithDetails> {
+        getAllWorkoutsError?.let { throw it }
+        return workouts.map { w ->
             WorkoutWithDetails(
                 workout = w,
                 exercises = exercises.filter { it.workoutId == w.id }.sortedBy { it.orderIndex },
                 completions = completions.filter { it.workoutId == w.id },
             )
         }
+    }
 
     fun seed(workout: Workout) {
         workouts.add(workout)

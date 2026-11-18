@@ -1,7 +1,9 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
+import android.database.sqlite.SQLiteException
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutCompletion
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -11,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -83,6 +86,12 @@ class WorkoutListViewModelTest {
         assertTrue(result.isFailure)
     }
 
+    @Test(expected = CancellationException::class)
+    fun importJson_rethrowsCancellation() = runTest(testDispatcher) {
+        dao.insertWorkoutError = CancellationException("cancelled")
+        vm.importJson("""{"workouts":[{"name":"A","exercises":[]}]}""")
+    }
+
     @Test
     fun exportJson_includesWorkoutsFromDao() = runTest(testDispatcher) {
         dao.seed(Workout(id = 1, name = "Push Day"))
@@ -125,5 +134,14 @@ class WorkoutListViewModelTest {
     fun exportWorkouts_reportsWriteFailure() = runTest(testDispatcher) {
         vm.exportWorkouts { throw IOException("boom") }
         assertEquals("Export failed: could not write file", vm.messages.first())
+    }
+
+    @Test
+    fun exportWorkouts_reportsDatabaseReadFailure() = runTest(testDispatcher) {
+        dao.getAllWorkoutsError = SQLiteException("boom")
+        var writeCalled = false
+        vm.exportWorkouts { writeCalled = true }
+        assertEquals("Export failed: could not read workouts", vm.messages.first())
+        assertFalse(writeCalled)
     }
 }

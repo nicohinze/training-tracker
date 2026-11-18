@@ -1,5 +1,6 @@
 package io.github.nicohinze.trainingtracker.viewmodel
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
@@ -7,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.nicohinze.trainingtracker.data.Workout
 import io.github.nicohinze.trainingtracker.data.WorkoutDao
 import io.github.nicohinze.trainingtracker.data.WorkoutJsonConverter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -78,10 +80,12 @@ class WorkoutListViewModel(
     /** Runs in [viewModelScope], so the export isn't cancelled by e.g. a screen rotation. */
     fun exportWorkouts(writeJson: suspend (String) -> Unit) {
         viewModelScope.launch {
-            val json = exportJson()
             val message = try {
+                val json = exportJson()
                 withContext(ioDispatcher) { writeJson(json) }
                 "Workouts exported"
+            } catch (_: SQLiteException) {
+                "Export failed: could not read workouts"
             } catch (_: IOException) {
                 "Export failed: could not write file"
             } catch (_: SecurityException) {
@@ -95,7 +99,7 @@ class WorkoutListViewModel(
         val workoutsWithData = WorkoutJsonConverter.fromJson(json)
         dao.importWorkouts(workoutsWithData)
         workoutsWithData.size
-    }
+    }.onFailure { if (it is CancellationException) throw it }
 
     suspend fun exportJson(): String {
         val workoutsWithData = dao.getAllWorkoutsWithExercisesAndCompletions()
